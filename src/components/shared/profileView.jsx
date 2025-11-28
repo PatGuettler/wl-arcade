@@ -1,5 +1,3 @@
-import React from 'react';
-// Add 'User' to the list of imports
 import { ArrowLeft, User } from 'lucide-react';
 
 const ProfileView = ({ user, data, onBack }) => {
