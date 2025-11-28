@@ -73,6 +73,7 @@ const SlidingWindowGame = ({ onExit, maxLevel, onSaveProgress, history }) => {
 
   // Combined Input Handlers
   const handleMove = (e) => {
+    if (viewport.isPinching) return;
      const cx = e.touches ? e.touches[0].clientX : e.clientX;
      if (isDraggingBracket.current) {
         e.preventDefault(); // Stop scroll
@@ -105,7 +106,10 @@ const SlidingWindowGame = ({ onExit, maxLevel, onSaveProgress, history }) => {
   return (
     <div className={`w-full h-screen bg-slate-950 overflow-hidden text-white select-none ${viewport.isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
       onMouseDown={viewport.startDrag} onMouseMove={handleMove} onMouseUp={handleUp} onMouseLeave={handleUp}
-      onTouchStart={viewport.startDrag} onTouchMove={handleMove} onTouchEnd={handleUp} onWheel={(e) => viewport.applyZoom(e.deltaY * -0.001)}>
+      onTouchStart={(e) => { viewport.touchStart(e); viewport.startDrag(e); }}
+      onTouchMove={(e) => { viewport.touchMove(e); handleMove(e); }}
+      onTouchEnd={(e) => { viewport.touchEnd(e); handleUp(e); }}
+      onWheel={(e) => viewport.applyZoom(e.deltaY * -0.001)}>
       
       <div className="absolute top-0 left-0 w-full p-6 z-20 flex justify-between pointer-events-none">
         <div className="bg-slate-900/80 backdrop-blur px-6 py-3 rounded-2xl border border-slate-700 shadow-xl pointer-events-auto">
