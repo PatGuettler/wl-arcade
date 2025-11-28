@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Timer, X, ZoomIn, ZoomOut, CheckCircle } from 'lucide-react';
-import { useGameViewport } from '../../hooks/useGameViewport';
+import { useGameViewport } from '../../hooks/gameViewport';
 import { getBestTimes } from '../../utils/storage';
-import LevelSelector from '../../components/shared/LevelSelector';
-import VictoryModal from '../../components/shared/VictoryModal';
-import { UnicornSVG } from '../../components/assets/GameAssets';
+import LevelSelector from '../../components/shared/levelSelector';
+import VictoryModal from '../../components/shared/victoryModal';
+import { UnicornSVG } from '../../components/assets/gameAssets';
+import { handleNextLevel } from '../../utils/levelMap';
 
 const UnicornJumpGame = ({ onExit, maxLevel, onSaveProgress, history }) => {
   const viewport = useGameViewport(1);
@@ -48,8 +49,6 @@ const UnicornJumpGame = ({ onExit, maxLevel, onSaveProgress, history }) => {
     viewport.setZoom(1); viewport.setPan({x: window.innerWidth*0.25, y:0});
     setTimerKey(p=>p+1); setGameState('playing');
   };
-
-  const handleNextLevel = () => { if (level >= 15) setGameState('victory'); else launchLevel(level + 1); };
 
   // Auto-Center Camera
   useEffect(() => {
@@ -124,7 +123,11 @@ const UnicornJumpGame = ({ onExit, maxLevel, onSaveProgress, history }) => {
            })()}
         </div>
       </div>
-      {(gameState === 'failed' || gameState === 'levelComplete' || gameState === 'victory') && <VictoryModal state={gameState} failReason={failReason} time={(elapsedTime/1000).toFixed(2)} onAction={gameState === 'failed' ? () => launchLevel(level) : handleNextLevel} isNext={gameState === 'levelComplete'} />}
+      {(gameState === 'failed' || gameState === 'levelComplete' || gameState === 'victory') && <VictoryModal state={gameState} failReason={failReason} time={(elapsedTime/1000).toFixed(2)} 
+        onAction={gameState === 'failed' 
+          ? () => launchLevel(level) 
+          : () => handleNextLevel(level, 15, setGameState, launchLevel) // Pass 15 for Unicorn
+        } isNext={gameState === 'levelComplete'} />}
     </div>
   );
 };

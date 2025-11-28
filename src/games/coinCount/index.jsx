@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Timer, X } from 'lucide-react';
 import { getBestTimes } from '../../utils/storage';
-import LevelSelector from '../../components/shared/LevelSelector';
-import VictoryModal from '../../components/shared/VictoryModal';
+import LevelSelector from '../../components/shared/levelSelector';
+import VictoryModal from '../../components/shared/victoryModal';
+import { Coin } from '../../components/assets/gameAssets';
+import { handleNextLevel } from '../../utils/levelMap';
 
 const CoinCountGame = ({ onExit, maxLevel, onSaveProgress, history }) => {
   const bestTimes = getBestTimes(history);
@@ -46,7 +48,6 @@ const CoinCountGame = ({ onExit, maxLevel, onSaveProgress, history }) => {
     }
   };
 
-  const handleNext = () => { if (level >= 15) setGameState('victory'); else launchLevel(level+1); };
   if (gameState === 'level-select') return <LevelSelector title="Coin Count" maxLevel={maxLevel} totalLevels={15} bestTimes={bestTimes} onSelectLevel={launchLevel} onBack={onExit} />;
   
   const pct = Math.min(100, (current/target)*100);
@@ -78,7 +79,11 @@ const CoinCountGame = ({ onExit, maxLevel, onSaveProgress, history }) => {
            {coins.map(c => <Coin key={c.id} type={c.t} disabled={gameState!=='playing'} onClick={() => handleCoin(c.v)} />)}
         </div>
       </div>
-      {(gameState === 'failed' || gameState === 'levelComplete' || gameState === 'victory') && <VictoryModal state={gameState} failReason="Over limit!" time={(elapsed/1000).toFixed(2)} onAction={gameState === 'failed' ? () => launchLevel(level) : handleNext} isNext={gameState === 'levelComplete'} />}
+      {(gameState === 'failed' || gameState === 'levelComplete' || gameState === 'victory') && <VictoryModal state={gameState} failReason="Over limit!" time={(elapsed/1000).toFixed(2)} 
+          onAction={gameState === 'failed' 
+            ? () => launchLevel(level) 
+            : () => handleNextLevel(level, 20, setGameState, launchLevel)
+          } isNext={gameState === 'levelComplete'} />}
     </div>
   );
 };

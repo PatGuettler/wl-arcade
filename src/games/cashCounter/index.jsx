@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Timer, X } from 'lucide-react';
 import { getBestTimes } from '../../utils/storage';
-import LevelSelector from '../../components/shared/LevelSelector';
-import VictoryModal from '../../components/shared/VictoryModal';
+import LevelSelector from '../../components/shared/levelSelector';
+import VictoryModal from '../../components/shared/victoryModal';
+import { Bill } from '../../components/assets/gameAssets';
+import { handleNextLevel } from '../../utils/levelMap';
 
 const CashCounterGame = ({ onExit, maxLevel, onSaveProgress, history }) => {
   const bestTimes = getBestTimes(history);
@@ -74,7 +76,11 @@ const CashCounterGame = ({ onExit, maxLevel, onSaveProgress, history }) => {
            {bills.map(v => <Bill key={v} value={v} disabled={gameState!=='playing'} onClick={() => handleBill(v)} />)}
         </div>
       </div>
-      {(gameState === 'failed' || gameState === 'levelComplete' || gameState === 'victory') && <VictoryModal state={gameState} failReason="Over limit!" time={(elapsed/1000).toFixed(2)} onAction={gameState === 'failed' ? () => launchLevel(level) : handleNext} isNext={gameState === 'levelComplete'} />}
+      {(gameState === 'failed' || gameState === 'levelComplete' || gameState === 'victory') && <VictoryModal state={gameState} failReason="Over limit!" time={(elapsed/1000).toFixed(2)} 
+          onAction={gameState === 'failed' 
+            ? () => launchLevel(level) 
+            : () => handleNextLevel(level, 20, setGameState, launchLevel)
+          } isNext={gameState === 'levelComplete'} />}
     </div>
   );
 };

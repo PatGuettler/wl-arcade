@@ -1,19 +1,16 @@
-// ==========================================
-// PERSISTENCE HELPER
-// ==========================================
-const DB_KEY = 'algo_arcade_v21'; 
+const DB_KEY = 'wl_arcade_x.x.x'; //need to put the version in dynamically
 
-const getDB = () => {
+export const getDB = () => {
   const stored = localStorage.getItem(DB_KEY);
   if (!stored) return { users: {}, lastUser: '' };
   return JSON.parse(stored);
 };
 
-const saveDB = (db) => {
+export const saveDB = (db) => {
   localStorage.setItem(DB_KEY, JSON.stringify(db));
 };
 
-const getBestTimes = (timesArray) => {
+export const getBestTimes = (timesArray) => {
   const bests = {};
   if (!timesArray) return bests;
   timesArray.forEach(entry => {

@@ -1,7 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Timer, X, ZoomIn, ZoomOut, CheckCircle } from 'lucide-react';
+import { Timer, X, ZoomIn, ZoomOut, GripVertical } from 'lucide-react';
+import { useGameViewport } from '../../hooks/gameViewport';
+import LevelSelector from '../../components/shared/levelSelector';
+import { getBestTimes } from '../../utils/storage';
+import VictoryModal from '../../components/shared/victoryModal';
+import { handleNextLevel } from '../../utils/levelMap';
 
 const SlidingWindowGame = ({ onExit, maxLevel, onSaveProgress, history }) => {
+  const BracketLeftSVG = () => (<svg viewBox="0 0 30 120" width="25" height="120" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round"><path d="M25 5 L5 5 L5 115 L25 115" /></svg>);
+  const BracketRightSVG = () => (<svg viewBox="0 0 30 120" width="25" height="120" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round"><path d="M5 5 L25 5 L25 115 L5 115" /></svg>);
+
   const viewport = useGameViewport(1);
   const [gameState, setGameState] = useState('level-select'); 
   const [level, setLevel] = useState(1);
@@ -129,7 +137,11 @@ const SlidingWindowGame = ({ onExit, maxLevel, onSaveProgress, history }) => {
            })}
         </div>
       </div>
-      {(gameState === 'failed' || gameState === 'levelComplete' || gameState === 'victory') && <VictoryModal state={gameState} failReason={failMessage} time={formatTime(elapsedTime)} onAction={gameState === 'failed' ? () => launchLevel(level) : handleNextLevel} isNext={gameState === 'levelComplete'} />}
+      {(gameState === 'failed' || gameState === 'levelComplete' || gameState === 'victory') && <VictoryModal state={gameState} failReason={failMessage} time={formatTime(elapsedTime)} 
+        onAction={gameState === 'failed' 
+          ? () => launchLevel(level) 
+          : () => handleNextLevel(level, 20, setGameState, launchLevel)
+        } isNext={gameState === 'levelComplete'} />}
     </div>
   );
 };

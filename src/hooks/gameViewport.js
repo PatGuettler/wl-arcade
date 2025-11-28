@@ -1,7 +1,6 @@
-// ==========================================
-// GAME ENGINE: CORE HOOKS
-// ==========================================
-const useGameViewport = (initialZoom = 1) => {
+import { useState, useRef, useEffect } from 'react';
+
+export const useGameViewport = (initialZoom = 1) => {
   const [zoom, setZoom] = useState(initialZoom);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
