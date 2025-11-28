@@ -2,7 +2,7 @@
 import { Header } from "./headerView";
 import { CATEGORIES } from "../../games/gameConfig";
 import { GAMES } from "../../games/gameConfig";
-import { User, LogOut, ArrowLeft} from 'lucide-react';
+import { ArrowLeft} from 'lucide-react';
 
 const CategoryView = ({ user, setCurrentView, handleLogout, activeCategory, goBack, userData, selectGame}) => {
     const category = CATEGORIES.find(c => c.id === activeCategory);

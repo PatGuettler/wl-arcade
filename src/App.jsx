@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { User, LogOut, ArrowLeft} from 'lucide-react';
 
 import { getDB, saveDB } from './utils/storage';
 import UnicornJumpGame from './games/unicornJump';
@@ -7,7 +6,7 @@ import SlidingWindowGame from './games/slidingWindow';
 import CoinCountGame from './games/coinCount';
 import CashCounterGame from './games/cashCounter';
 import ProfileView from './components/shared/profileView';
-import { CATEGORIES, GAMES } from './games/gameConfig';
+import { CATEGORIES } from './games/gameConfig';
 import LoginView from './components/shared/loginView';
 import DashBoardView from './components/shared/dashboardView';
 import CategoryView from './components/shared/categoryView';
@@ -62,7 +61,11 @@ export default function App() {
 
   const selectCategory = (catId) => { setActiveCategory(catId); setCurrentView('category'); };
   const selectGame = (gameId) => { setActiveGame(gameId); setCurrentView('game'); };
-  const goBack = () => { if (currentView === 'game') setCurrentView('category'); else if (currentView === 'category') setCurrentView('dashboard'); else if (currentView === 'profile') setCurrentView('dashboard'); };
+  const goBack = () => { 
+    if (currentView === 'game') setCurrentView('category'); 
+    else if (currentView === 'category') setCurrentView('dashboard'); 
+    else if (currentView === 'profile') setCurrentView('dashboard'); 
+  };
 
   if (currentView === 'login') return <LoginView user={user} setUser={setUser} handleLogin={handleLogin} />;
   if (currentView === 'profile') return <ProfileView user={user} data={userData} onBack={goBack} />;
