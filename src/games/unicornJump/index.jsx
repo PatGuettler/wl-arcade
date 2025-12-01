@@ -18,7 +18,6 @@ const UnicornJumpGame = ({ onExit, maxLevel, onSaveProgress, history }) => {
   const [failReason, setFailReason] = useState('');
   const [timerKey, setTimerKey] = useState(0); 
   
-  const timerRef = useRef(null);
   const startTimeRef = useRef(0);
   
   const NODE_SPACING = 140;
@@ -79,11 +78,9 @@ const UnicornJumpGame = ({ onExit, maxLevel, onSaveProgress, history }) => {
   const handleDown = (e) => viewport.startDrag(e);
   const handleMove = (e) => viewport.doDrag(e);
   const handleUp = () => viewport.endDrag();
-  const handleWheel = (e) => viewport.applyZoom(e.deltaY * -0.001);
 
   if (gameState === 'level-select') return <LevelSelector title="Unicorn Jump" maxLevel={maxLevel} totalLevels={15} bestTimes={getBestTimes(history)} onSelectLevel={launchLevel} onBack={onExit} />;
   const formatTime = (ms) => (ms / 1000).toFixed(2);
-  const getNodeY = (i) => Math.sin(i * PATH_FREQUENCY) * PATH_AMPLITUDE;
 
   return (
     <div className={`w-full h-screen bg-slate-950 overflow-hidden text-white select-none ${viewport.isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
@@ -128,7 +125,7 @@ const UnicornJumpGame = ({ onExit, maxLevel, onSaveProgress, history }) => {
       {(gameState === 'failed' || gameState === 'levelComplete' || gameState === 'victory') && <VictoryModal state={gameState} failReason={failReason} time={(elapsedTime/1000).toFixed(2)} 
         onAction={gameState === 'failed' 
           ? () => launchLevel(level) 
-          : () => handleNextLevel(level, 15, setGameState, launchLevel) // Pass 15 for Unicorn
+          : () => handleNextLevel(level, 15, setGameState, launchLevel)
         } isNext={gameState === 'levelComplete'} />}
     </div>
   );

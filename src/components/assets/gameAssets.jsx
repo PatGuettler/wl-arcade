@@ -86,3 +86,6 @@ export const Bill = ({ value, onClick, disabled }) => {
     </button>
   );
 };
+
+export const BracketLeftSVG = () => (<svg viewBox="0 0 30 120" width="25" height="120" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round"><path d="M25 5 L5 5 L5 115 L25 115" /></svg>);
+export const BracketRightSVG = () => (<svg viewBox="0 0 30 120" width="25" height="120" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round"><path d="M5 5 L25 5 L25 115 L5 115" /></svg>);

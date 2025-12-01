@@ -5,11 +5,9 @@ import LevelSelector from '../../components/shared/levelSelector';
 import { getBestTimes } from '../../utils/storage';
 import VictoryModal from '../../components/shared/victoryModal';
 import { handleNextLevel } from '../../utils/levelMap';
+import { BracketLeftSVG, BracketRightSVG } from '../../components/assets/gameAssets';
 
 const SlidingWindowGame = ({ onExit, maxLevel, onSaveProgress, history }) => {
-  const BracketLeftSVG = () => (<svg viewBox="0 0 30 120" width="25" height="120" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round"><path d="M25 5 L5 5 L5 115 L25 115" /></svg>);
-  const BracketRightSVG = () => (<svg viewBox="0 0 30 120" width="25" height="120" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round"><path d="M5 5 L25 5 L25 115 L5 115" /></svg>);
-
   const viewport = useGameViewport(1);
   const [gameState, setGameState] = useState('level-select'); 
   const [level, setLevel] = useState(1);
@@ -71,7 +69,6 @@ const SlidingWindowGame = ({ onExit, maxLevel, onSaveProgress, history }) => {
 
   const fail = (msg) => { setFailMessage(msg); setGameState('scoring'); setTimeout(() => setGameState('failed'), 1000); };
 
-  // Combined Input Handlers
   const handleMove = (e) => {
     if (viewport.isPinching) return;
      const cx = e.touches ? e.touches[0].clientX : e.clientX;

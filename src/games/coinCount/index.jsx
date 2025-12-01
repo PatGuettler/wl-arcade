@@ -8,7 +8,6 @@ import { handleNextLevel } from '../../utils/levelMap';
 
 const CoinCountGame = ({ onExit, maxLevel, onSaveProgress, history }) => {
   const bestTimes = getBestTimes(history);
-  const TOTAL_LEVELS = 15;
   const [gameState, setGameState] = useState('level-select');
   const [level, setLevel] = useState(1);
   const [target, setTarget] = useState(0);
@@ -17,11 +16,9 @@ const CoinCountGame = ({ onExit, maxLevel, onSaveProgress, history }) => {
   const startTimeRef = useRef(0);
 
   const formatMoney = (c) => `$${(c/100).toFixed(2)}`;
-  const formatTime = (ms) => (ms / 1000).toFixed(2);
   const coins = [{id:'p',v:1,t:'penny'},{id:'n',v:5,t:'nickel'},{id:'d',v:10,t:'dime'},{id:'q',v:25,t:'quarter'}];
 
   useEffect(() => {
-    let interval = null;
     if (gameState === 'playing') {
       startTimeRef.current = Date.now();
       const i = setInterval(() => setElapsed(Date.now() - startTimeRef.current), 50);
