@@ -2,8 +2,9 @@ import React, { useState, useEffect, useRef } from "react";
 import { Timer, X, ZoomIn, ZoomOut, CheckCircle } from "lucide-react";
 import { useGameViewport } from "../../hooks/gameViewport";
 import { UnicornSVG } from "../../components/assets/gameAssets";
+import { getDB, getBestTimes, saveDb } from "../../utils/storage";
 
-const UnicornJumpGame = () => {
+const UnicornJumpGame = ({ userId = "default", onExit, onSelectLevel }) => {
   const viewport = useGameViewport(1);
   const [gameState, setGameState] = useState("playing");
   const [level, setLevel] = useState(1);
@@ -12,43 +13,13 @@ const UnicornJumpGame = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [elapsedTime, setElapsedTime] = useState(0);
   const [nodePositions, setNodePositions] = useState([]);
-  const [curvePath, setCurvePath] = useState("");
-
+  const [db, setDb] = useState(getDB());
   const startTimeRef = useRef(0);
 
-  // Updated for closer spacing + smoother spline
-  const NODE_SPACING_Y = 115;
-  const PATH_WIDTH = 260;
-  const PATH_FREQUENCY = 0.22;
-
-  // Helper: Create smooth cubic spline from points
-  const generateSmoothPath = (points) => {
-    if (points.length < 2) return "";
-
-    const path = [];
-    const cp = (p0, p1, p2, t) => {
-      return {
-        x: p1.x + ((p2?.x ?? p1.x) - p0.x) * t,
-        y: p1.y + ((p2?.y ?? p1.y) - p0.y) * t,
-      };
-    };
-
-    path.push(`M ${points[0].x} ${points[0].y}`);
-
-    for (let i = 0; i < points.length - 1; i++) {
-      const p0 = points[i - 1] || points[i];
-      const p1 = points[i];
-      const p2 = points[i + 1];
-      const p3 = points[i + 2] || p2;
-
-      const cp1 = cp(p0, p1, p2, 0.2);
-      const cp2 = cp(p1, p2, p3, -0.2);
-
-      path.push(`C ${cp1.x} ${cp1.y}, ${cp2.x} ${cp2.y}, ${p2.x} ${p2.y}`);
-    }
-
-    return path.join(" ");
-  };
+  // Updated path parameters for smoother S-curve and closer nodes
+  const NODE_SPACING_Y = 120; // closer nodes vertically
+  const PATH_WIDTH = 300; // narrower path
+  const PATH_FREQUENCY = 0.6; // smoother sine wave
 
   useEffect(() => {
     let interval = null;
@@ -63,10 +34,14 @@ const UnicornJumpGame = () => {
   }, [gameState]);
 
   useEffect(() => {
-    launchLevel(1);
+    const startLvl = db.users[userId]?.maxLevel
+      ? db.users[userId].maxLevel + 1
+      : 1;
+    launchLevel(startLvl);
   }, []);
 
   const launchLevel = (lvl) => {
+    setLevel(lvl); // update current level immediately
     const len = 15 + lvl * 5;
     const arr = new Array(len).fill(null);
     let curr = 0,
@@ -84,48 +59,43 @@ const UnicornJumpGame = () => {
       curr += j;
     }
 
-    // Fallback fill
     for (let i = 0; i < len; i++) {
       if (arr[i] === null) {
         arr[i] = Math.floor(Math.random() * maxJ) + 1;
       }
     }
 
-    // Compute smooth wandering path points
-    const points = [];
+    //path drawer
+    const positions = [];
     for (let i = 0; i <= len; i++) {
+      const t = i / len; // 0-1
       const y = i * NODE_SPACING_Y;
 
-      const baseCurve = Math.sin(i * PATH_FREQUENCY) * PATH_WIDTH;
-      const secondaryCurve =
-        Math.sin(i * PATH_FREQUENCY * 0.4) * (PATH_WIDTH * 0.25);
+      // Small horizontal deviation using sine
+      const x =
+        window.innerWidth / 6 + Math.sin(t * Math.PI * 3) * (PATH_WIDTH * 2); // 0.5 = less swing
 
-      const x = window.innerWidth / 2 + baseCurve + secondaryCurve;
-      points.push({ x, y });
+      positions.push({ x, y });
     }
 
-    setNodePositions(points);
-    setCurvePath(generateSmoothPath(points));
-
-    setLevel(lvl);
     setLevelData(arr);
+    setNodePositions(positions);
     setCurrentIndex(0);
     setVisitedIndices([0]);
     viewport.setZoom(1);
     viewport.setPan({ x: 0, y: window.innerHeight * 0.3 });
+    setElapsedTime(0);
     setGameState("playing");
   };
 
-  // Auto-follow camera
+  // Auto-center camera
   useEffect(() => {
     if (gameState === "playing" && nodePositions[currentIndex]) {
       const pos = nodePositions[currentIndex];
       const targetScreenX = window.innerWidth / 2;
       const targetScreenY = window.innerHeight * 0.35;
-
       const newPanX = targetScreenX - pos.x * viewport.zoom;
       const newPanY = targetScreenY - pos.y * viewport.zoom;
-
       viewport.setPan({ x: newPanX, y: newPanY });
     }
   }, [currentIndex, gameState, nodePositions]);
@@ -140,10 +110,37 @@ const UnicornJumpGame = () => {
       setVisitedIndices((p) => [...p, idx]);
       if (idx === levelData.length) {
         setGameState("victory");
+        saveProgress(level, elapsedTime);
       }
     } else {
       setGameState("failed");
     }
+  };
+
+  const saveProgress = (lvl, time) => {
+    const currentUser = db.users[userId] || { maxLevel: 0, history: [] };
+    const newHistory = [...currentUser.history, { level: lvl, time }];
+    const bestTimes = getBestTimes(newHistory);
+    const maxLevel = Math.max(currentUser.maxLevel || 0, lvl);
+
+    const updatedUser = {
+      ...currentUser,
+      maxLevel,
+      history: newHistory,
+      bestTimes,
+    };
+
+    const newDb = {
+      ...db,
+      users: {
+        ...db.users,
+        [userId]: updatedUser,
+      },
+      lastUser: userId,
+    };
+
+    setDb(newDb);
+    saveDB(newDb);
   };
 
   const handleDown = (e) => viewport.startDrag(e);
@@ -189,7 +186,7 @@ const UnicornJumpGame = () => {
           </div>
         </div>
         <button
-          onClick={() => launchLevel(level)}
+          onClick={onExit}
           className="pointer-events-auto p-3 bg-slate-800 rounded-full hover:bg-rose-500 transition-colors"
         >
           <X size={20} />
@@ -212,7 +209,7 @@ const UnicornJumpGame = () => {
         </button>
       </div>
 
-      {/* GAME WORLD */}
+      {/* Game World */}
       <div
         className="absolute inset-0 origin-center will-change-transform"
         style={{
@@ -220,128 +217,141 @@ const UnicornJumpGame = () => {
           transition: viewport.isDragging ? "none" : "transform 0.3s ease-out",
         }}
       >
-        {/* Smooth Walking Trail */}
-        <svg className="absolute top-0 left-0 w-full h-[90000px] overflow-visible pointer-events-none">
-          <defs>
-            <linearGradient
-              id="rainbowGradient"
-              x1="0%"
-              y1="0%"
-              x2="0%"
-              y2="100%"
-            >
-              <stop offset="0%" stopColor="#ef4444" />
-              <stop offset="20%" stopColor="#f97316" />
-              <stop offset="40%" stopColor="#eab308" />
-              <stop offset="60%" stopColor="#22c55e" />
-              <stop offset="80%" stopColor="#3b82f6" />
-              <stop offset="100%" stopColor="#a855f7" />
-            </linearGradient>
-          </defs>
+        <div className="relative">
+          <svg className="absolute top-0 left-0 w-full h-[90000px] overflow-visible pointer-events-none">
+            <defs>
+              <linearGradient
+                id="rainbowGradient"
+                x1="0%"
+                y1="0%"
+                x2="0%"
+                y2="100%"
+              >
+                <stop offset="0%" stopColor="#ef4444" />
+                <stop offset="20%" stopColor="#f97316" />
+                <stop offset="40%" stopColor="#eab308" />
+                <stop offset="60%" stopColor="#22c55e" />
+                <stop offset="80%" stopColor="#3b82f6" />
+                <stop offset="100%" stopColor="#a855f7" />
+              </linearGradient>
+            </defs>
 
-          {/* Main Path (background trail) */}
-          <path
-            d={curvePath}
-            fill="none"
-            stroke="#1e293b"
-            strokeWidth="12"
-            strokeLinecap="round"
-          />
+            {nodePositions.slice(0, -1).map((pos, i) => {
+              const nextPos = nodePositions[i + 1];
+              if (!nextPos) return null;
 
-          {/* Rainbow progress path */}
-          <path
-            d={curvePath}
-            fill="none"
-            stroke="url(#rainbowGradient)"
-            strokeWidth="14"
-            strokeLinecap="round"
-            strokeDasharray={`${currentIndex * NODE_SPACING_Y}, 200000`}
-            className="drop-shadow-[0_0_14px_rgba(168,85,247,0.6)]"
-          />
-        </svg>
+              const prevPos = nodePositions[i - 1] || pos;
+              const nextNextPos = nodePositions[i + 2] || nextPos;
 
-        {/* Nodes */}
-        {levelData.map((val, idx) => {
-          const pos = nodePositions[idx];
-          if (!pos) return null;
+              // Control points for smooth curve
+              const cp1x = pos.x + (nextPos.x - prevPos.x) * 0.25;
+              const cp1y = pos.y + (nextPos.y - prevPos.y) * 0.25;
+              const cp2x = nextPos.x - (nextNextPos.x - pos.x) * 0.25;
+              const cp2y = nextPos.y - (nextNextPos.y - pos.y) * 0.25;
 
-          const isCurrent = idx === currentIndex;
-          const isVisited = visitedIndices.includes(idx);
+              const isRainbow = i < currentIndex;
 
-          let baseClasses =
-            "bg-slate-900 border-slate-700 text-slate-500 hover:border-slate-500 hover:scale-105";
-          if (isVisited && !isCurrent) {
-            baseClasses =
-              "bg-emerald-900 border-emerald-500 text-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.6)]";
-          } else if (isCurrent) {
-            baseClasses =
-              "bg-cyan-500 border-white text-slate-900 ring-4 ring-cyan-500/30 scale-110 z-20";
-          }
+              return (
+                <path
+                  key={`path-${i}`}
+                  d={`M ${pos.x} ${pos.y} C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${nextPos.x} ${nextPos.y}`}
+                  fill="none"
+                  stroke={isRainbow ? "url(#rainbowGradient)" : "#1e293b"}
+                  strokeWidth={isRainbow ? "10" : "8"}
+                  strokeLinecap="round"
+                  className={
+                    isRainbow
+                      ? "drop-shadow-[0_0_10px_rgba(168,85,247,0.5)]"
+                      : ""
+                  }
+                />
+              );
+            })}
+          </svg>
 
-          return (
+          {/* Nodes */}
+          {levelData.map((val, idx) => {
+            const pos = nodePositions[idx];
+            if (!pos) return null;
+
+            const isCurrent = idx === currentIndex;
+            const isVisited = visitedIndices.includes(idx);
+
+            let baseClasses =
+              "bg-slate-900 border-slate-700 text-slate-500 hover:border-slate-500 hover:scale-105";
+            if (isVisited && !isCurrent) {
+              baseClasses =
+                "bg-emerald-900 border-emerald-500 text-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.6)]";
+            } else if (isCurrent) {
+              baseClasses =
+                "bg-cyan-500 border-white text-slate-900 ring-4 ring-cyan-500/30 scale-110 z-20";
+            }
+
+            return (
+              <div
+                key={idx}
+                onClick={() => handleNodeClick(idx)}
+                className={`absolute flex flex-col items-center justify-center w-16 h-16 rounded-full border-4 text-xl font-black transition-all duration-300 cursor-pointer ${baseClasses}`}
+                style={{
+                  left: pos.x - 32,
+                  top: pos.y - 32,
+                }}
+              >
+                <span className="relative z-10 drop-shadow-md">{val}</span>
+                {isVisited && !isCurrent && (
+                  <div
+                    className="absolute text-2xl animate-pulse drop-shadow-md select-none pointer-events-none z-40 opacity-80"
+                    style={{ marginTop: "-50px" }}
+                  >
+                    🌈
+                  </div>
+                )}
+              </div>
+            );
+          })}
+
+          {/* Unicorn */}
+          {nodePositions[currentIndex] && (
             <div
-              key={idx}
-              onClick={() => handleNodeClick(idx)}
-              className={`absolute flex flex-col items-center justify-center w-16 h-16 rounded-full border-4 text-xl font-black transition-all duration-300 cursor-pointer ${baseClasses}`}
+              className="absolute pointer-events-none z-30 w-20 h-20 transition-all duration-500 ease-in-out filter drop-shadow-2xl"
               style={{
-                left: pos.x - 32,
-                top: pos.y - 32,
+                left: nodePositions[currentIndex].x - 40,
+                top: nodePositions[currentIndex].y - 100,
               }}
             >
-              <span className="relative z-10 drop-shadow-md">{val}</span>
-              {isVisited && !isCurrent && (
-                <div
-                  className="absolute text-2xl animate-pulse drop-shadow-md select-none pointer-events-none z-40 opacity-80"
-                  style={{ marginTop: "-50px" }}
-                >
-                  🌈
-                </div>
-              )}
+              <UnicornSVG />
             </div>
-          );
-        })}
+          )}
 
-        {/* Unicorn */}
-        {nodePositions[currentIndex] && (
-          <div
-            className="absolute pointer-events-none z-30 w-20 h-20 transition-all duration-500 ease-in-out filter drop-shadow-2xl"
-            style={{
-              left: nodePositions[currentIndex].x - 40,
-              top: nodePositions[currentIndex].y - 100,
-            }}
-          >
-            <UnicornSVG />
-          </div>
-        )}
+          {/* Goal */}
+          {(() => {
+            const lastIdx = levelData.length;
+            const pos = nodePositions[lastIdx];
+            if (!pos) return null;
 
-        {/* Goal */}
-        {(() => {
-          const lastIdx = levelData.length;
-          const pos = nodePositions[lastIdx];
-          if (!pos) return null;
-
-          const isVisited = visitedIndices.includes(lastIdx);
-          return (
-            <div
-              onClick={() => handleNodeClick(lastIdx)}
-              className={`absolute flex items-center justify-center w-16 h-16 rounded-full border-4 transition-transform z-10 cursor-pointer ${
-                isVisited
-                  ? "bg-emerald-500 border-emerald-300 scale-110 shadow-[0_0_50px_rgba(16,185,129,0.8)] animate-pulse"
-                  : "bg-slate-900 border-slate-700 opacity-60 hover:opacity-100 hover:scale-105 hover:border-emerald-500/50"
-              }`}
-              style={{ left: pos.x - 32, top: pos.y - 32 }}
-            >
-              <CheckCircle
-                className={`w-8 h-8 pointer-events-none ${
-                  isVisited ? "text-white" : "text-slate-600"
+            const isVisited = visitedIndices.includes(lastIdx);
+            return (
+              <div
+                onClick={() => handleNodeClick(lastIdx)}
+                className={`absolute flex items-center justify-center w-16 h-16 rounded-full border-4 transition-transform z-10 cursor-pointer ${
+                  isVisited
+                    ? "bg-emerald-500 border-emerald-300 scale-110 shadow-[0_0_50px_rgba(16,185,129,0.8)] animate-pulse"
+                    : "bg-slate-900 border-slate-700 opacity-60 hover:opacity-100 hover:scale-105 hover:border-emerald-500/50"
                 }`}
-              />
-              <span className="absolute -bottom-8 text-xs font-bold tracking-widest text-emerald-400 pointer-events-none">
-                GOAL
-              </span>
-            </div>
-          );
-        })()}
+                style={{ left: pos.x - 32, top: pos.y - 32 }}
+              >
+                <CheckCircle
+                  className={`w-8 h-8 pointer-events-none ${
+                    isVisited ? "text-white" : "text-slate-600"
+                  }`}
+                />
+                <span className="absolute -bottom-8 text-xs font-bold tracking-widest text-emerald-400 pointer-events-none">
+                  GOAL
+                </span>
+              </div>
+            );
+          })()}
+        </div>
       </div>
 
       {/* Victory/Fail Modal */}
@@ -360,10 +370,12 @@ const UnicornJumpGame = () => {
               <p className="text-slate-400 mb-6">Wrong jump!</p>
             )}
             <button
-              onClick={() => launchLevel(level)}
+              onClick={() =>
+                launchLevel(gameState === "victory" ? level + 1 : level)
+              }
               className="px-8 py-3 bg-cyan-500 hover:bg-cyan-400 text-slate-900 font-bold rounded-xl transition-colors"
             >
-              {gameState === "victory" ? "Play Again" : "Retry"}
+              {gameState === "victory" ? "Next Level" : "Retry"}
             </button>
           </div>
         </div>
