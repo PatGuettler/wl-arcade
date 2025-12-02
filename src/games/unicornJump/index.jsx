@@ -2,18 +2,22 @@ import React, { useState, useEffect, useRef } from "react";
 import { Timer, X, ZoomIn, ZoomOut, CheckCircle } from "lucide-react";
 import { useGameViewport } from "../../hooks/gameViewport";
 import { UnicornSVG } from "../../components/assets/gameAssets";
-import { getDB, getBestTimes } from "../../utils/storage";
+import VictoryModal from "../../components/shared/victoryModal";
 
-const UnicornJumpGame = ({ userId = "default", onExit, onSelectLevel }) => {
+const UnicornJumpGame = ({
+  onExit,
+  lastCompletedLevel = 0,
+  history,
+  onSaveProgress,
+}) => {
   const viewport = useGameViewport(1);
-  const [gameState, setGameState] = useState("playing");
+  const [gameState, setGameState] = useState("playing"); // Start playing immediately
   const [level, setLevel] = useState(1);
   const [levelData, setLevelData] = useState([]);
   const [visitedIndices, setVisitedIndices] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [elapsedTime, setElapsedTime] = useState(0);
   const [nodePositions, setNodePositions] = useState([]);
-  const [db, setDb] = useState(getDB());
   const startTimeRef = useRef(0);
 
   // Updated path parameters for smoother S-curve and closer nodes
@@ -33,10 +37,7 @@ const UnicornJumpGame = ({ userId = "default", onExit, onSelectLevel }) => {
   }, [gameState]);
 
   useEffect(() => {
-    const startLvl = db.users[userId]?.maxLevel
-      ? db.users[userId].maxLevel + 1
-      : 1;
-    launchLevel(startLvl);
+    launchLevel(lastCompletedLevel + 1);
   }, []);
 
   const launchLevel = (lvl) => {
@@ -108,38 +109,20 @@ const UnicornJumpGame = ({ userId = "default", onExit, onSelectLevel }) => {
       setCurrentIndex(idx);
       setVisitedIndices((p) => [...p, idx]);
       if (idx === levelData.length) {
-        setGameState("victory");
-        saveProgress(level, elapsedTime);
+        const finalTime = elapsedTime / 1000;
+
+        console.log("=== LEVEL COMPLETE ===");
+        console.log("Completed Level:", level);
+        console.log("Time:", finalTime);
+        // Save the completed level (not level + 1)
+        onSaveProgress(level, finalTime);
+
+        setGameState("scoring");
+        setTimeout(() => setGameState("levelComplete"), 1000);
       }
     } else {
       setGameState("failed");
     }
-  };
-
-  const saveProgress = (lvl, time) => {
-    const currentUser = db.users[userId] || { maxLevel: 0, history: [] };
-    const newHistory = [...currentUser.history, { level: lvl, time }];
-    const bestTimes = getBestTimes(newHistory);
-    const maxLevel = Math.max(currentUser.maxLevel || 0, lvl);
-
-    const updatedUser = {
-      ...currentUser,
-      maxLevel,
-      history: newHistory,
-      bestTimes,
-    };
-
-    const newDb = {
-      ...db,
-      users: {
-        ...db.users,
-        [userId]: updatedUser,
-      },
-      lastUser: userId,
-    };
-
-    setDb(newDb);
-    saveDB(newDb);
   };
 
   const handleDown = (e) => viewport.startDrag(e);
@@ -191,7 +174,6 @@ const UnicornJumpGame = ({ userId = "default", onExit, onSelectLevel }) => {
           <X size={20} />
         </button>
       </div>
-
       {/* Zoom Controls */}
       <div className="absolute bottom-6 right-6 z-30 flex flex-col gap-2 pointer-events-auto">
         <button
@@ -207,7 +189,6 @@ const UnicornJumpGame = ({ userId = "default", onExit, onSelectLevel }) => {
           <ZoomOut />
         </button>
       </div>
-
       {/* Game World */}
       <div
         className="absolute inset-0 origin-center will-change-transform"
@@ -309,7 +290,6 @@ const UnicornJumpGame = ({ userId = "default", onExit, onSelectLevel }) => {
             );
           })}
 
-          {/* Unicorn */}
           {nodePositions[currentIndex] && (
             <div
               className="absolute pointer-events-none z-30 w-20 h-20 transition-all duration-500 ease-in-out filter drop-shadow-2xl"
@@ -352,32 +332,18 @@ const UnicornJumpGame = ({ userId = "default", onExit, onSelectLevel }) => {
           })()}
         </div>
       </div>
-
-      {/* Victory/Fail Modal */}
-      {(gameState === "victory" || gameState === "failed") && (
-        <div className="absolute inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-slate-900 border-2 border-cyan-500 rounded-3xl p-8 max-w-md text-center shadow-2xl">
-            <h2
-              className={`text-4xl font-bold mb-4 ${
-                gameState === "victory" ? "text-emerald-400" : "text-rose-400"
-              }`}
-            >
-              {gameState === "victory" ? "🎉 Victory!" : "💔 Try Again"}
-            </h2>
-            <p className="text-xl mb-2">Time: {formatTime(elapsedTime)}s</p>
-            {gameState === "failed" && (
-              <p className="text-slate-400 mb-6">Wrong jump!</p>
-            )}
-            <button
-              onClick={() =>
-                launchLevel(gameState === "victory" ? level + 1 : level)
-              }
-              className="px-8 py-3 bg-cyan-500 hover:bg-cyan-400 text-slate-900 font-bold rounded-xl transition-colors"
-            >
-              {gameState === "victory" ? "Next Level" : "Retry"}
-            </button>
-          </div>
-        </div>
+      {(gameState === "levelComplete" || gameState === "failed") && (
+        <VictoryModal
+          state={gameState}
+          failReason={gameState === "failed" ? "Wrong jump!" : ""}
+          time={formatTime(elapsedTime)}
+          onAction={
+            gameState === "failed"
+              ? () => launchLevel(level) // Retry same level
+              : () => launchLevel(level + 1) // Move to next level
+          }
+          isNext={gameState === "levelComplete"}
+        />
       )}
     </div>
   );

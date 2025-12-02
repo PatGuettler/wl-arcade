@@ -62,10 +62,10 @@ export default function App() {
     db.lastUser = user;
     if (!db.users[user]) {
       db.users[user] = {
-        unicorn: { maxLevel: 1, times: [] },
-        sliding: { maxLevel: 1, times: [] },
-        coin: { maxLevel: 1, times: [] },
-        cash: { maxLevel: 1, times: [] },
+        unicorn: { lastCompletedLevel: 0, times: [] },
+        sliding: { lastCompletedLevel: 0, times: [] },
+        coin: { lastCompletedLevel: 0, times: [] },
+        cash: { lastCompletedLevel: 0, times: [] },
       };
     } else {
       if (!db.users[user].coin)
@@ -78,16 +78,22 @@ export default function App() {
     setCurrentView("dashboard");
   };
 
-  const handleSaveProgress = (gameKey, nextLvl, time) => {
+  const handleSaveProgress = (gameKey, completedLevel, time) => {
     const db = getDB();
     const currentUserData = db.users[user];
-    if (nextLvl > currentUserData[gameKey].maxLevel)
-      currentUserData[gameKey].maxLevel = nextLvl;
+
+    // Update last completed level
+    if (completedLevel > currentUserData[gameKey].lastCompletedLevel) {
+      currentUserData[gameKey].lastCompletedLevel = completedLevel;
+    }
+
+    // Save the time
     currentUserData[gameKey].times.push({
-      level: nextLvl - 1,
+      level: completedLevel,
       time,
       date: Date.now(),
     });
+
     db.users[user] = currentUserData;
     saveDB(db);
     setUserData({ ...currentUserData });
@@ -124,40 +130,44 @@ export default function App() {
       return (
         <UnicornJumpGame
           onExit={goBack}
-          maxLevel={userData.unicorn.maxLevel}
+          lastCompletedLevel={userData.unicorn.lastCompletedLevel}
           history={userData.unicorn.times}
-          onSaveProgress={(lvl, time) =>
-            handleSaveProgress("unicorn", lvl, time)
+          onSaveProgress={(completedLevel, time) =>
+            handleSaveProgress("unicorn", completedLevel, time)
           }
         />
       );
     if (activeGame === "sliding")
       return (
         <SlidingWindowGame
-          onExit={goBack}
-          maxLevel={userData.sliding.maxLevel}
-          history={userData.sliding.times}
-          onSaveProgress={(lvl, time) =>
-            handleSaveProgress("sliding", lvl, time)
-          }
+        // onExit={goBack}
+        // lastCompletedLevel={userData.unicorn.lastCompletedLevel}
+        // history={userData.unicorn.times}
+        // onSaveProgress={(completedLevel, time) =>
+        //   handleSaveProgress("unicorn", completedLevel, time)
+        // }
         />
       );
     if (activeGame === "coin")
       return (
         <CoinCountGame
-          onExit={goBack}
-          maxLevel={userData.coin.maxLevel}
-          history={userData.coin.times}
-          onSaveProgress={(lvl, time) => handleSaveProgress("coin", lvl, time)}
+        // onExit={goBack}
+        // lastCompletedLevel={userData.unicorn.lastCompletedLevel}
+        // history={userData.unicorn.times}
+        // onSaveProgress={(completedLevel, time) =>
+        //   handleSaveProgress("unicorn", completedLevel, time)
+        // }
         />
       );
     if (activeGame === "cash")
       return (
         <CashCounterGame
-          onExit={goBack}
-          maxLevel={userData.cash.maxLevel}
-          history={userData.cash.times}
-          onSaveProgress={(lvl, time) => handleSaveProgress("cash", lvl, time)}
+        // onExit={goBack}
+        // lastCompletedLevel={userData.unicorn.lastCompletedLevel}
+        // history={userData.unicorn.times}
+        // onSaveProgress={(completedLevel, time) =>
+        //   handleSaveProgress("unicorn", completedLevel, time)
+        // }
         />
       );
     return <div className="text-white">Game Not Found</div>;
