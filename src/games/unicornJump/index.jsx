@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Timer, X, ZoomIn, ZoomOut, CheckCircle } from "lucide-react";
 import { useGameViewport } from "../../hooks/gameViewport";
 import { UnicornSVG } from "../../components/assets/gameAssets";
-import { getDB, getBestTimes, saveDb } from "../../utils/storage";
+import { getDB, getBestTimes } from "../../utils/storage";
 
 const UnicornJumpGame = ({ userId = "default", onExit, onSelectLevel }) => {
   const viewport = useGameViewport(1);
@@ -17,9 +17,8 @@ const UnicornJumpGame = ({ userId = "default", onExit, onSelectLevel }) => {
   const startTimeRef = useRef(0);
 
   // Updated path parameters for smoother S-curve and closer nodes
-  const NODE_SPACING_Y = 120; // closer nodes vertically
-  const PATH_WIDTH = 300; // narrower path
-  const PATH_FREQUENCY = 0.6; // smoother sine wave
+  const NODE_SPACING_Y = 110; // closer nodes vertically
+  const PATH_WIDTH = 150; // narrower path
 
   useEffect(() => {
     let interval = null;
@@ -73,7 +72,7 @@ const UnicornJumpGame = ({ userId = "default", onExit, onSelectLevel }) => {
 
       // Small horizontal deviation using sine
       const x =
-        window.innerWidth / 6 + Math.sin(t * Math.PI * 3) * (PATH_WIDTH * 2); // 0.5 = less swing
+        window.innerWidth / 6 + Math.sin(t * Math.PI * 3) * (PATH_WIDTH * 1); // 0.5 = less swing
 
       positions.push({ x, y });
     }

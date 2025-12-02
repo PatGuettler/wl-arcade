@@ -28,7 +28,7 @@ const SlidingWindowGame = ({ onExit, maxLevel, onSaveProgress, history }) => {
   const bracketStartRef = useRef(0);
   const startTimeRef = useRef(0);
 
-  const NODE_WIDTH = 80;
+  const NODE_WIDTH = 50;
   const NODE_GAP = 16;
   const FULL_W = 96;
   const PADDING = 40;
