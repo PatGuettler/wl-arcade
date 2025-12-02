@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect } from "react";
 
-// Mobile-app style pinch zoom & pan
 export const useGameViewport = (initialZoom = 1) => {
   const [zoom, setZoom] = useState(initialZoom);
   const [pan, setPan] = useState({ x: 0, y: 0 });
@@ -14,7 +13,8 @@ export const useGameViewport = (initialZoom = 1) => {
     pinchStartDist: 0,
     pinchStartZoom: 1,
     pinchCenter: { x: 0, y: 0 },
-    isPinching: false
+    pinchStartPan: { x: 0, y: 0 },
+    isPinching: false,
   });
 
   // Keep stateRef synced
@@ -34,7 +34,7 @@ export const useGameViewport = (initialZoom = 1) => {
       x,
       y,
       panX: stateRef.current.pan.x,
-      panY: stateRef.current.pan.y
+      panY: stateRef.current.pan.y,
     };
 
     setIsDragging(true);
@@ -54,7 +54,7 @@ export const useGameViewport = (initialZoom = 1) => {
 
     setPan({
       x: stateRef.current.dragStart.panX + dx,
-      y: stateRef.current.dragStart.panY + dy
+      y: stateRef.current.dragStart.panY + dy,
     });
   };
 
@@ -62,9 +62,6 @@ export const useGameViewport = (initialZoom = 1) => {
     setIsDragging(false);
   };
 
-  // ------------------------------
-  //      PINCH-TO-ZOOM SUPPORT
-  // ------------------------------
   const touchStart = (e) => {
     if (e.touches.length === 2) {
       e.preventDefault();
@@ -76,10 +73,12 @@ export const useGameViewport = (initialZoom = 1) => {
       stateRef.current.isPinching = true;
       stateRef.current.pinchStartDist = dist;
       stateRef.current.pinchStartZoom = stateRef.current.zoom;
+      stateRef.current.pinchStartPan = { ...stateRef.current.pan };
 
+      // Calculate pinch center in screen coordinates
       stateRef.current.pinchCenter = {
         x: (a.clientX + b.clientX) / 2,
-        y: (a.clientY + b.clientY) / 2
+        y: (a.clientY + b.clientY) / 2,
       };
     }
   };
@@ -91,17 +90,28 @@ export const useGameViewport = (initialZoom = 1) => {
       const [a, b] = e.touches;
       const dist = Math.hypot(b.clientX - a.clientX, b.clientY - a.clientY);
 
+      // Calculate new zoom based on pinch distance change
       const scale = dist / stateRef.current.pinchStartDist;
-      const newZoom = Math.max(0.2, Math.min(3.0, stateRef.current.pinchStartZoom * scale));
+      const newZoom = Math.max(
+        0.2,
+        Math.min(3.0, stateRef.current.pinchStartZoom * scale)
+      );
 
-      const cx = stateRef.current.pinchCenter.x;
-      const cy = stateRef.current.pinchCenter.y;
+      // Get the pinch center point
+      const centerX = stateRef.current.pinchCenter.x;
+      const centerY = stateRef.current.pinchCenter.y;
 
-      const worldX = (cx - stateRef.current.pan.x) / stateRef.current.zoom;
-      const worldY = (cy - stateRef.current.pan.y) / stateRef.current.zoom;
+      // Calculate world coordinates of the pinch center at the START of the pinch
+      const worldX =
+        (centerX - stateRef.current.pinchStartPan.x) /
+        stateRef.current.pinchStartZoom;
+      const worldY =
+        (centerY - stateRef.current.pinchStartPan.y) /
+        stateRef.current.pinchStartZoom;
 
-      const newPanX = cx - worldX * newZoom;
-      const newPanY = cy - worldY * newZoom;
+      // Calculate new pan to keep that world point under the pinch center
+      const newPanX = centerX - worldX * newZoom;
+      const newPanY = centerY - worldY * newZoom;
 
       setZoom(newZoom);
       setPan({ x: newPanX, y: newPanY });
@@ -117,15 +127,20 @@ export const useGameViewport = (initialZoom = 1) => {
   // Mouse + wheel zoom (desktop)
   // ----------------------------------
   const applyZoom = (delta, center = null) => {
-    const focus = center || { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+    const focus = center || {
+      x: window.innerWidth / 2,
+      y: window.innerHeight / 2,
+    };
 
     const current = stateRef.current.zoom;
     const newZoom = Math.max(0.2, Math.min(3.0, current + delta));
     if (newZoom === current) return;
 
+    // Calculate world coordinates at the focus point
     const worldX = (focus.x - stateRef.current.pan.x) / current;
     const worldY = (focus.y - stateRef.current.pan.y) / current;
 
+    // Keep that world point at the same screen position
     const newPanX = focus.x - worldX * newZoom;
     const newPanY = focus.y - worldY * newZoom;
 
@@ -148,11 +163,10 @@ export const useGameViewport = (initialZoom = 1) => {
     endDrag,
     applyZoom,
     centerOn,
-    // Pass through the new touch handlers
     touchStart,
     touchMove,
     touchEnd,
     setZoom,
-    setPan
+    setPan,
   };
 };
