@@ -12,10 +12,10 @@ export const useGameViewport = (initialZoom = 1) => {
     dragStart: { x: 0, y: 0, panX: 0, panY: 0 },
     pinchStartDist: 0,
     pinchStartZoom: 1,
-    pinchCenter: { x: 0, y: 0 },
     pinchStartPan: { x: 0, y: 0 },
+    pinchScreenCenter: { x: 0, y: 0 },
+    pinchWorldCenter: { x: 0, y: 0 },
     isPinching: false,
-    lastTouchCenter: null,
   });
 
   // Keep stateRef synced
@@ -63,74 +63,71 @@ export const useGameViewport = (initialZoom = 1) => {
     setIsDragging(false);
   };
 
+  // ------------------------------
+  //      PINCH-TO-ZOOM SUPPORT
+  // ------------------------------
   const touchStart = (e) => {
     if (e.touches.length === 2) {
       e.preventDefault();
 
       const [a, b] = e.touches;
-
       const dist = Math.hypot(b.clientX - a.clientX, b.clientY - a.clientY);
 
-      // Calculate pinch center in screen coordinates
-      const centerX = (a.clientX + b.clientX) / 2;
-      const centerY = (a.clientY + b.clientY) / 2;
+      // Store current screen center between fingers
+      const screenCenterX = (a.clientX + b.clientX) / 2;
+      const screenCenterY = (a.clientY + b.clientY) / 2;
+
+      // Store current state
+      const currentZoom = stateRef.current.zoom;
+      const currentPanX = stateRef.current.pan.x;
+      const currentPanY = stateRef.current.pan.y;
+
+      // Convert to world coordinates
+      const worldX = (screenCenterX - currentPanX) / currentZoom;
+      const worldY = (screenCenterY - currentPanY) / currentZoom;
 
       stateRef.current.isPinching = true;
       stateRef.current.pinchStartDist = dist;
-      stateRef.current.pinchStartZoom = stateRef.current.zoom;
-      stateRef.current.pinchStartPan = { ...stateRef.current.pan };
-      stateRef.current.pinchCenter = { x: centerX, y: centerY };
-      stateRef.current.lastTouchCenter = { x: centerX, y: centerY };
+      stateRef.current.pinchStartZoom = currentZoom;
+      stateRef.current.pinchStartPan = { x: currentPanX, y: currentPanY };
+      stateRef.current.pinchScreenCenter = {
+        x: screenCenterX,
+        y: screenCenterY,
+      };
+      stateRef.current.pinchWorldCenter = { x: worldX, y: worldY };
     }
   };
 
   const touchMove = (e) => {
-    if (e.touches.length === 2) {
+    if (e.touches.length === 2 && stateRef.current.isPinching) {
       e.preventDefault();
 
       const [a, b] = e.touches;
-      const dist = Math.hypot(b.clientX - a.clientX, b.clientY - a.clientY);
+      const currentDist = Math.hypot(
+        b.clientX - a.clientX,
+        b.clientY - a.clientY
+      );
 
-      // Calculate current touch center
-      const currentCenterX = (a.clientX + b.clientX) / 2;
-      const currentCenterY = (a.clientY + b.clientY) / 2;
+      // Current screen center between fingers
+      const currentScreenCenterX = (a.clientX + b.clientX) / 2;
+      const currentScreenCenterY = (a.clientY + b.clientY) / 2;
 
-      // Calculate how much the touch center has moved
-      const centerDeltaX = currentCenterX - stateRef.current.lastTouchCenter.x;
-      const centerDeltaY = currentCenterY - stateRef.current.lastTouchCenter.y;
-
-      // Update last touch center
-      stateRef.current.lastTouchCenter = {
-        x: currentCenterX,
-        y: currentCenterY,
-      };
-
-      // Calculate new zoom based on pinch distance change
-      const scale = dist / stateRef.current.pinchStartDist;
+      // Calculate zoom scale
+      const scale = currentDist / stateRef.current.pinchStartDist;
       const newZoom = Math.max(
         0.2,
         Math.min(3.0, stateRef.current.pinchStartZoom * scale)
       );
 
-      // Use the ORIGINAL pinch center (from touchStart) for zoom focal point
-      const focalX = stateRef.current.pinchCenter.x;
-      const focalY = stateRef.current.pinchCenter.y;
+      // The world point we want to keep under our fingers
+      const targetWorldX = stateRef.current.pinchWorldCenter.x;
+      const targetWorldY = stateRef.current.pinchWorldCenter.y;
 
-      // Calculate world coordinates at the focal point using START state
-      const worldX =
-        (focalX - stateRef.current.pinchStartPan.x) /
-        stateRef.current.pinchStartZoom;
-      const worldY =
-        (focalY - stateRef.current.pinchStartPan.y) /
-        stateRef.current.pinchStartZoom;
-
-      // Calculate new pan to keep that world point at the focal point
-      let newPanX = focalX - worldX * newZoom;
-      let newPanY = focalY - worldY * newZoom;
-
-      // Apply the cumulative pan from finger movement
-      newPanX += centerDeltaX;
-      newPanY += centerDeltaY;
+      // Calculate where that world point should be on screen now
+      // We want: currentScreenCenter = pan + (worldCenter * zoom)
+      // So: pan = currentScreenCenter - (worldCenter * zoom)
+      const newPanX = currentScreenCenterX - targetWorldX * newZoom;
+      const newPanY = currentScreenCenterY - targetWorldY * newZoom;
 
       setZoom(newZoom);
       setPan({ x: newPanX, y: newPanY });
@@ -139,7 +136,6 @@ export const useGameViewport = (initialZoom = 1) => {
 
   const touchEnd = () => {
     stateRef.current.isPinching = false;
-    stateRef.current.lastTouchCenter = null;
     setIsDragging(false);
   };
 
@@ -168,10 +164,17 @@ export const useGameViewport = (initialZoom = 1) => {
     setPan({ x: newPanX, y: newPanY });
   };
 
-  const centerOn = (worldX) => {
-    const screenCenter = window.innerWidth / 2;
-    const newPanX = screenCenter - worldX * stateRef.current.zoom;
-    setPan((prev) => ({ ...prev, x: newPanX }));
+  // Center on a world coordinate (works for both X and Y axis)
+  const centerOn = (worldCoord, axis = "x") => {
+    if (axis === "y") {
+      const screenCenter = window.innerHeight / 2;
+      const newPanY = screenCenter - worldCoord * stateRef.current.zoom;
+      setPan((prev) => ({ ...prev, y: newPanY }));
+    } else {
+      const screenCenter = window.innerWidth / 2;
+      const newPanX = screenCenter - worldCoord * stateRef.current.zoom;
+      setPan((prev) => ({ ...prev, x: newPanX }));
+    }
   };
 
   return {
