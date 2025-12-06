@@ -59,7 +59,7 @@ const CoinCountGame = ({ onExit, lastCompletedLevel = 0, onSaveProgress }) => {
     const next = current + v;
     setCurrent(next);
     if (next === target) {
-      onSaveProgress(level + 1, elapsedTime / 1000);
+      onSaveProgress(level, elapsedTime / 1000);
       setGameState("scoring");
       setTimeout(
         () => setGameState(level === 15 ? "victory" : "levelComplete"),
@@ -128,7 +128,7 @@ const CoinCountGame = ({ onExit, lastCompletedLevel = 0, onSaveProgress }) => {
                 TARGET
               </div>
               <div className="text-3xl font-black text-emerald-400 flex items-center gap-4">
-                ${target}
+                {formatMoney(target)}
               </div>
             </div>
             <div className="text-slate-400 text-sm font-bold uppercase mb-1">
