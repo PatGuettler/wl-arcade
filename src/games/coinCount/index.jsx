@@ -62,18 +62,6 @@ const CoinCountGame = ({ onExit, maxLevel, onSaveProgress, history }) => {
     }
   };
 
-  if (gameState === "level-select")
-    return (
-      <LevelSelector
-        title="Coin Count"
-        maxLevel={maxLevel}
-        totalLevels={15}
-        bestTimes={bestTimes}
-        onSelectLevel={launchLevel}
-        onBack={onExit}
-      />
-    );
-
   const pct = Math.min(100, (current / target) * 100);
 
   return (

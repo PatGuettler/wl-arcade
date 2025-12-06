@@ -56,18 +56,6 @@ const CashCounterGame = ({ onExit, maxLevel, onSaveProgress, history }) => {
     }
   };
 
-  if (gameState === "level-select")
-    return (
-      <LevelSelector
-        title="Cash Counter"
-        maxLevel={maxLevel}
-        totalLevels={15}
-        bestTimes={bestTimes}
-        onSelectLevel={launchLevel}
-        onBack={onExit}
-      />
-    );
-
   const pct = Math.min(100, (current / target) * 100);
 
   return (

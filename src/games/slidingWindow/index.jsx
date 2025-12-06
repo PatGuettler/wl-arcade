@@ -136,17 +136,6 @@ const SlidingWindowGame = ({ onExit, maxLevel, onSaveProgress, history }) => {
     bracketStartRef.current = bracketPosRef.current;
   };
 
-  if (gameState === "level-select")
-    return (
-      <LevelSelector
-        title="Sliding Window"
-        maxLevel={maxLevel}
-        totalLevels={20}
-        bestTimes={getBestTimes(history)}
-        onSelectLevel={launchLevel}
-        onBack={onExit}
-      />
-    );
   const formatTime = (ms) => (ms / 1000).toFixed(2);
 
   return (
