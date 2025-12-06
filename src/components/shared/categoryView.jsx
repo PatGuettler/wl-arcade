@@ -54,7 +54,7 @@ const CategoryView = ({
                   {game.title}
                 </h3>
                 <div className="mt-2 px-2 py-1 bg-slate-800 rounded text-[10px] text-emerald-400 font-mono border border-slate-700">
-                  {userData[game.id]?.maxLevel > 1
+                  {userData[game.id]?.maxLevel > 0
                     ? `Last: ${userData[game.id].maxLevel}`
                     : "Start"}
                 </div>

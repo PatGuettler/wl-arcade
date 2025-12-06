@@ -63,17 +63,13 @@ export default function App() {
     db.lastUser = user;
     if (!db.users[user]) {
       db.users[user] = {
-        unicorn: { maxLevel: 1, times: [] },
-        sliding: { maxLevel: 1, times: [] },
-        coin: { maxLevel: 1, times: [] },
-        cash: { maxLevel: 1, times: [] },
+        unicorn: { maxLevel: 0, times: [] },
+        sliding: { maxLevel: 0, times: [] },
+        coin: { maxLevel: 0, times: [] },
+        cash: { maxLevel: 0, times: [] },
       };
-    } else {
-      if (!db.users[user].coin)
-        db.users[user].coin = { maxLevel: 1, times: [] };
-      if (!db.users[user].cash)
-        db.users[user].cash = { maxLevel: 1, times: [] };
     }
+
     saveDB(db);
     setUserData(db.users[user]);
     setCurrentView("dashboard");
@@ -86,7 +82,7 @@ export default function App() {
     if (nextLvl > currentUserData[gameKey].maxLevel)
       currentUserData[gameKey].maxLevel = nextLvl;
     currentUserData[gameKey].times.push({
-      level: nextLvl - 1,
+      level: nextLvl,
       time,
       date: Date.now(),
     });
@@ -126,7 +122,7 @@ export default function App() {
       return (
         <UnicornJumpGame
           onExit={goBack}
-          lastCompletedLevel={userData.unicorn.maxLevel}
+          lastCompletedLevel={userData.unicorn.maxLevel + 1} //auto move the user on to the next level
           history={userData.unicorn.times}
           onSaveProgress={(lvl, time) =>
             handleSaveProgress("unicorn", lvl, time)

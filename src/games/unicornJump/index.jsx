@@ -37,7 +37,11 @@ const UnicornJumpGame = ({
   }, [gameState]);
 
   useEffect(() => {
-    launchLevel(lastCompletedLevel + 1);
+    if (lastCompletedLevel === 0) {
+      lastCompletedLevel = lastCompletedLevel + 1;
+    }
+
+    launchLevel(lastCompletedLevel);
   }, []);
 
   const launchLevel = (lvl) => {
@@ -115,7 +119,7 @@ const UnicornJumpGame = ({
         console.log("Completed Level:", level);
         console.log("Time:", finalTime);
         // Save the completed level (not level + 1)
-        onSaveProgress(level + 1, finalTime);
+        onSaveProgress(level, finalTime);
 
         setGameState("scoring");
         setTimeout(() => setGameState("levelComplete"), 1000);
