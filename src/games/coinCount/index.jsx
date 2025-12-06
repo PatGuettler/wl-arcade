@@ -3,7 +3,6 @@ import { Timer, X } from "lucide-react";
 import { getBestTimes } from "../../utils/storage";
 import VictoryModal from "../../components/shared/victoryModal";
 import { Coin } from "../../components/assets/gameAssets";
-import { handleNextLevel } from "../../utils/levelMap";
 
 const CoinCountGame = ({ onExit, maxLevel, onSaveProgress, history }) => {
   const bestTimes = getBestTimes(history);
@@ -149,17 +148,15 @@ const CoinCountGame = ({ onExit, maxLevel, onSaveProgress, history }) => {
           ))}
         </div>
       </div>
-      {(gameState === "failed" ||
-        gameState === "levelComplete" ||
-        gameState === "victory") && (
+      {(gameState === "levelComplete" || gameState === "failed") && (
         <VictoryModal
           state={gameState}
-          failReason="Over limit!"
-          time={(elapsed / 1000).toFixed(2)}
+          failReason={gameState === "failed" ? "Wrong jump!" : ""}
+          time={formatTime(elapsedTime)}
           onAction={
             gameState === "failed"
-              ? () => launchLevel(level)
-              : () => handleNextLevel(level, 20, setGameState, launchLevel)
+              ? () => launchLevel(level) // Retry same level
+              : () => launchLevel(level + 1) // Move to next level
           }
           isNext={gameState === "levelComplete"}
         />

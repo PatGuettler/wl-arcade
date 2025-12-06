@@ -3,7 +3,6 @@ import { Timer, X, ZoomIn, ZoomOut, GripVertical } from "lucide-react";
 import { useGameViewport } from "../../hooks/gameViewport";
 import { getBestTimes } from "../../utils/storage";
 import VictoryModal from "../../components/shared/victoryModal";
-import { handleNextLevel } from "../../utils/levelMap";
 import {
   BracketLeftSVG,
   BracketRightSVG,
@@ -293,17 +292,15 @@ const SlidingWindowGame = ({ onExit, maxLevel, onSaveProgress, history }) => {
           })}
         </div>
       </div>
-      {(gameState === "failed" ||
-        gameState === "levelComplete" ||
-        gameState === "victory") && (
+      {(gameState === "levelComplete" || gameState === "failed") && (
         <VictoryModal
           state={gameState}
-          failReason={failMessage}
+          failReason={gameState === "failed" ? "Wrong jump!" : ""}
           time={formatTime(elapsedTime)}
           onAction={
             gameState === "failed"
-              ? () => launchLevel(level)
-              : () => handleNextLevel(level, 20, setGameState, launchLevel)
+              ? () => launchLevel(level) // Retry same level
+              : () => launchLevel(level + 1) // Move to next level
           }
           isNext={gameState === "levelComplete"}
         />
