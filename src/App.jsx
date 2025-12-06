@@ -123,7 +123,6 @@ export default function App() {
         <UnicornJumpGame
           onExit={goBack}
           lastCompletedLevel={userData.unicorn.maxLevel + 1} //auto move the user on to the next level
-          history={userData.unicorn.times}
           onSaveProgress={(lvl, time) =>
             handleSaveProgress("unicorn", lvl, time)
           }
@@ -134,7 +133,6 @@ export default function App() {
         <SlidingWindowGame
           onExit={goBack}
           lastCompletedLevel={userData.sliding.maxLevel + 1} //auto move the user on to the next level
-          history={userData.sliding.times}
           onSaveProgress={(lvl, time) =>
             handleSaveProgress("sliding", lvl, time)
           }
@@ -145,7 +143,6 @@ export default function App() {
         <CoinCountGame
           onExit={goBack}
           lastCompletedLevel={userData.coin.maxLevel + 1} //auto move the user on to the next level
-          history={userData.coin.times}
           onSaveProgress={(lvl, time) => handleSaveProgress("coin", lvl, time)}
         />
       );
@@ -154,7 +151,6 @@ export default function App() {
         <CashCounterGame
           onExit={goBack}
           lastCompletedLevel={userData.cash.maxLevel + 1} //auto move the user on to the next level
-          history={userData.cash.times}
           onSaveProgress={(lvl, time) => handleSaveProgress("cash", lvl, time)}
         />
       );

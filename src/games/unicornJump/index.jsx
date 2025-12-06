@@ -7,7 +7,6 @@ import VictoryModal from "../../components/shared/victoryModal";
 const UnicornJumpGame = ({
   onExit,
   lastCompletedLevel = 0,
-  history,
   onSaveProgress,
 }) => {
   const viewport = useGameViewport(1);
@@ -118,7 +117,6 @@ const UnicornJumpGame = ({
         console.log("=== LEVEL COMPLETE ===");
         console.log("Completed Level:", level);
         console.log("Time:", finalTime);
-        // Save the completed level (not level + 1)
         onSaveProgress(level, finalTime);
 
         setGameState("scoring");
