@@ -133,6 +133,7 @@ export default function App() {
       return (
         <SlidingWindowGame
           onExit={goBack}
+          lastCompletedLevel={userData.sliding.maxLevel + 1} //auto move the user on to the next level
           history={userData.sliding.times}
           onSaveProgress={(lvl, time) =>
             handleSaveProgress("sliding", lvl, time)
@@ -143,6 +144,7 @@ export default function App() {
       return (
         <CoinCountGame
           onExit={goBack}
+          lastCompletedLevel={userData.coin.maxLevel + 1} //auto move the user on to the next level
           history={userData.coin.times}
           onSaveProgress={(lvl, time) => handleSaveProgress("coin", lvl, time)}
         />
@@ -151,6 +153,7 @@ export default function App() {
       return (
         <CashCounterGame
           onExit={goBack}
+          lastCompletedLevel={userData.cash.maxLevel + 1} //auto move the user on to the next level
           history={userData.cash.times}
           onSaveProgress={(lvl, time) => handleSaveProgress("cash", lvl, time)}
         />
