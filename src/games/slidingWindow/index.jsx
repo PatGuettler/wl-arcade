@@ -1,48 +1,59 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Timer, X, ZoomIn, ZoomOut, GripVertical } from "lucide-react";
 import { useGameViewport } from "../../hooks/gameViewport";
-import LevelSelector from "../../components/shared/levelSelector";
 import { getBestTimes } from "../../utils/storage";
 import VictoryModal from "../../components/shared/victoryModal";
-import { handleNextLevel } from "../../utils/levelMap";
 import {
   BracketLeftSVG,
   BracketRightSVG,
 } from "../../components/assets/gameAssets";
 
-const SlidingWindowGame = ({ onExit, maxLevel, onSaveProgress, history }) => {
+const SlidingWindowGame = ({
+  onExit,
+  lastCompletedLevel = 0,
+  onSaveProgress,
+}) => {
   const viewport = useGameViewport(1);
   const [gameState, setGameState] = useState("level-select");
   const [level, setLevel] = useState(1);
   const [levelData, setLevelData] = useState([]);
   const [windowSize, setWindowSize] = useState(3);
   const [windowPos, setWindowPos] = useState(0);
-  const [failMessage, setFailMessage] = useState("");
   const [bracketPos, setBracketPos] = useState(0);
   const bracketPosRef = useRef(0);
   const [elapsedTime, setElapsedTime] = useState(0);
-  const [timerKey, setTimerKey] = useState(0);
-
+  const [failMessage, setFailMessage] = useState("");
   const isDraggingBracket = useRef(false);
   const dragStartBracketX = useRef(0);
   const bracketStartRef = useRef(0);
   const startTimeRef = useRef(0);
 
-  const NODE_WIDTH = 80;
+  const NODE_WIDTH = 50;
   const NODE_GAP = 16;
   const FULL_W = 96;
   const PADDING = 40;
 
+  const formatTime = (ms) => (ms / 1000).toFixed(2); //util
+
   useEffect(() => {
-    if (gameState === "setup" || gameState === "playing") {
+    let interval = null;
+    if (gameState === "playing") {
       startTimeRef.current = Date.now();
-      const interval = setInterval(
+      interval = setInterval(
         () => setElapsedTime(Date.now() - startTimeRef.current),
         50
       );
-      return () => clearInterval(interval);
     }
-  }, [gameState, timerKey]);
+    return () => clearInterval(interval);
+  }, [gameState]);
+
+  useEffect(() => {
+    if (lastCompletedLevel === 0) {
+      lastCompletedLevel = lastCompletedLevel + 1;
+    }
+
+    launchLevel(lastCompletedLevel);
+  }, []);
 
   const launchLevel = (lvl) => {
     const len = 15 + (lvl > 5 ? 5 : 0);
@@ -58,7 +69,6 @@ const SlidingWindowGame = ({ onExit, maxLevel, onSaveProgress, history }) => {
     setWindowPos(0);
     setBracketPos(0);
     setElapsedTime(0);
-    setTimerKey((p) => p + 1);
     viewport.setZoom(1);
     viewport.setPan({ x: 0, y: 0 });
     bracketPosRef.current = 0;
@@ -76,12 +86,9 @@ const SlidingWindowGame = ({ onExit, maxLevel, onSaveProgress, history }) => {
     const maxVal = Math.max(...winIndices.map((i) => levelData[i]));
     if (levelData[idx] === maxVal) {
       if (windowPos + windowSize >= levelData.length) {
-        onSaveProgress(level + 1, elapsedTime / 1000);
+        onSaveProgress(level, elapsedTime / 1000);
         setGameState("scoring");
-        setTimeout(
-          () => setGameState(level === 20 ? "victory" : "levelComplete"),
-          500
-        );
+        setTimeout(() => setGameState("levelComplete"), 1000);
       } else {
         setWindowPos((p) => p + 1);
         viewport.centerOn(
@@ -138,19 +145,6 @@ const SlidingWindowGame = ({ onExit, maxLevel, onSaveProgress, history }) => {
     bracketStartRef.current = bracketPosRef.current;
   };
 
-  if (gameState === "level-select")
-    return (
-      <LevelSelector
-        title="Sliding Window"
-        maxLevel={maxLevel}
-        totalLevels={20}
-        bestTimes={getBestTimes(history)}
-        onSelectLevel={launchLevel}
-        onBack={onExit}
-      />
-    );
-  const formatTime = (ms) => (ms / 1000).toFixed(2);
-
   return (
     <div
       className={`w-full h-screen bg-slate-950 overflow-hidden text-white select-none ${
@@ -175,7 +169,34 @@ const SlidingWindowGame = ({ onExit, maxLevel, onSaveProgress, history }) => {
       onWheel={(e) => viewport.applyZoom(e.deltaY * -0.001)}
     >
       <div className="absolute top-0 left-0 w-full p-6 z-20 flex justify-between pointer-events-none">
-        <div className="bg-slate-900/80 backdrop-blur px-6 py-3 rounded-2xl border border-slate-700 shadow-xl pointer-events-auto">
+        {/* Header @TODO: Make this a util*/}
+        <div className="absolute top-0 left-0 w-full p-6 z-20 flex justify-between pointer-events-none">
+          <div className="bg-slate-900/80 backdrop-blur px-6 py-3 rounded-2xl border border-slate-700 shadow-xl pointer-events-auto">
+            <div className="text-cyan-400 text-xs font-bold tracking-widest mb-1">
+              SLIDING WINDOW
+            </div>
+            <div className="text-xl font-bold flex items-center gap-4">
+              <span>
+                Select{" "}
+                <span className="text-emerald-400 text-2xl">{windowSize}</span>{" "}
+                nodes
+              </span>
+            </div>
+            <div className="text-xl font-bold flex items-center gap-4">
+              <span>Lvl {level}</span>
+              <div className="flex items-center gap-2 text-slate-400 font-mono border-l border-slate-700 pl-4 ml-2">
+                <Timer size={16} /> {formatTime(elapsedTime)}s
+              </div>
+            </div>
+          </div>
+          <button
+            onClick={onExit}
+            className="pointer-events-auto p-3 bg-slate-800 rounded-full hover:bg-rose-500 transition-colors"
+          >
+            <X size={20} />
+          </button>
+        </div>
+        {/* <div className="bg-slate-900/80 backdrop-blur px-6 py-3 rounded-2xl border border-slate-700 shadow-xl pointer-events-auto">
           <h2 className="text-cyan-400 text-xs font-bold tracking-widest uppercase mb-1">
             SLIDING WINDOW
           </h2>
@@ -197,7 +218,7 @@ const SlidingWindowGame = ({ onExit, maxLevel, onSaveProgress, history }) => {
               </div>
             )}
           </div>
-        </div>
+        </div> */}
         <button
           onClick={onExit}
           className="pointer-events-auto p-3 bg-slate-800 rounded-full hover:bg-rose-500 transition-colors"
@@ -294,17 +315,15 @@ const SlidingWindowGame = ({ onExit, maxLevel, onSaveProgress, history }) => {
           })}
         </div>
       </div>
-      {(gameState === "failed" ||
-        gameState === "levelComplete" ||
-        gameState === "victory") && (
+      {(gameState === "levelComplete" || gameState === "failed") && (
         <VictoryModal
           state={gameState}
           failReason={failMessage}
           time={formatTime(elapsedTime)}
           onAction={
             gameState === "failed"
-              ? () => launchLevel(level)
-              : () => handleNextLevel(level, 20, setGameState, launchLevel)
+              ? () => launchLevel(level) // Retry same level
+              : () => launchLevel(level + 1) // Move to next level
           }
           isNext={gameState === "levelComplete"}
         />

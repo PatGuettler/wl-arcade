@@ -27,34 +27,43 @@ export default function App() {
     }
   }, []);
 
-  // Handle Android back button
   useEffect(() => {
-    const backButtonListener = CapacitorApp.addListener(
-      "backButton",
-      ({ canGoBack }) => {
-        // Handle navigation based on current view
-        if (currentView === "game") {
-          goBack();
-        } else if (currentView === "category") {
-          goBack();
-        } else if (currentView === "profile") {
-          goBack();
-        } else if (currentView === "dashboard") {
-          // On dashboard, exit the app
-          CapacitorApp.exitApp();
-        } else if (currentView === "login") {
-          // On login screen, exit the app
-          CapacitorApp.exitApp();
+    let backButtonListener;
+
+    // addListener returns a Promise, so we need to await it
+    const setupListener = async () => {
+      backButtonListener = await CapacitorApp.addListener(
+        "backButton",
+        ({ canGoBack }) => {
+          // Handle navigation based on current view
+          if (currentView === "game") {
+            goBack();
+          } else if (currentView === "category") {
+            goBack();
+          } else if (currentView === "profile") {
+            goBack();
+          } else if (currentView === "dashboard") {
+            // On dashboard, exit the app
+            CapacitorApp.exitApp();
+          } else if (currentView === "login") {
+            // On login screen, exit the app
+            CapacitorApp.exitApp();
+          }
         }
-      }
-    );
+      );
+    };
+
+    setupListener();
 
     // Cleanup listener on unmount
     return () => {
-      backButtonListener.remove();
+      if (backButtonListener) {
+        backButtonListener.remove();
+      }
     };
   }, [currentView]); // Re-register when currentView changes
 
+  //@TODO: this needs to be cleaned up
   const handleLogin = (e) => {
     e.preventDefault();
     if (!user.trim()) return;
@@ -62,29 +71,26 @@ export default function App() {
     db.lastUser = user;
     if (!db.users[user]) {
       db.users[user] = {
-        unicorn: { maxLevel: 1, times: [] },
-        sliding: { maxLevel: 1, times: [] },
-        coin: { maxLevel: 1, times: [] },
-        cash: { maxLevel: 1, times: [] },
+        unicorn: { maxLevel: 0, times: [] },
+        sliding: { maxLevel: 0, times: [] },
+        coin: { maxLevel: 0, times: [] },
+        cash: { maxLevel: 0, times: [] },
       };
-    } else {
-      if (!db.users[user].coin)
-        db.users[user].coin = { maxLevel: 1, times: [] };
-      if (!db.users[user].cash)
-        db.users[user].cash = { maxLevel: 1, times: [] };
     }
+
     saveDB(db);
     setUserData(db.users[user]);
     setCurrentView("dashboard");
   };
 
   const handleSaveProgress = (gameKey, nextLvl, time) => {
+    console.log(`saving ${gameKey} ; ${nextLvl}`);
     const db = getDB();
     const currentUserData = db.users[user];
     if (nextLvl > currentUserData[gameKey].maxLevel)
       currentUserData[gameKey].maxLevel = nextLvl;
     currentUserData[gameKey].times.push({
-      level: nextLvl - 1,
+      level: nextLvl,
       time,
       date: Date.now(),
     });
@@ -124,8 +130,7 @@ export default function App() {
       return (
         <UnicornJumpGame
           onExit={goBack}
-          maxLevel={userData.unicorn.maxLevel}
-          history={userData.unicorn.times}
+          lastCompletedLevel={userData.unicorn.maxLevel + 1} //auto move the user on to the next level
           onSaveProgress={(lvl, time) =>
             handleSaveProgress("unicorn", lvl, time)
           }
@@ -135,8 +140,7 @@ export default function App() {
       return (
         <SlidingWindowGame
           onExit={goBack}
-          maxLevel={userData.sliding.maxLevel}
-          history={userData.sliding.times}
+          lastCompletedLevel={userData.sliding.maxLevel + 1} //auto move the user on to the next level
           onSaveProgress={(lvl, time) =>
             handleSaveProgress("sliding", lvl, time)
           }
@@ -146,8 +150,7 @@ export default function App() {
       return (
         <CoinCountGame
           onExit={goBack}
-          maxLevel={userData.coin.maxLevel}
-          history={userData.coin.times}
+          lastCompletedLevel={userData.coin.maxLevel + 1} //auto move the user on to the next level
           onSaveProgress={(lvl, time) => handleSaveProgress("coin", lvl, time)}
         />
       );
@@ -155,8 +158,7 @@ export default function App() {
       return (
         <CashCounterGame
           onExit={goBack}
-          maxLevel={userData.cash.maxLevel}
-          history={userData.cash.times}
+          lastCompletedLevel={userData.cash.maxLevel + 1} //auto move the user on to the next level
           onSaveProgress={(lvl, time) => handleSaveProgress("cash", lvl, time)}
         />
       );

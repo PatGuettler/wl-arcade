@@ -1,8 +1,8 @@
-const DB_KEY = 'wl_arcade_x.x.x'; //need to put the version in dynamically
+const DB_KEY = "wl_arcade_x.x.x"; //need to put the version in dynamically
 
 export const getDB = () => {
   const stored = localStorage.getItem(DB_KEY);
-  if (!stored) return { users: {}, lastUser: '' };
+  if (!stored) return { users: {}, lastUser: "" };
   return JSON.parse(stored);
 };
 
@@ -13,7 +13,7 @@ export const saveDB = (db) => {
 export const getBestTimes = (timesArray) => {
   const bests = {};
   if (!timesArray) return bests;
-  timesArray.forEach(entry => {
+  timesArray.forEach((entry) => {
     if (!bests[entry.level] || entry.time < bests[entry.level]) {
       bests[entry.level] = entry.time;
     }
