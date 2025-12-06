@@ -1,19 +1,19 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Timer, X } from "lucide-react";
-import { getBestTimes } from "../../utils/storage";
 import VictoryModal from "../../components/shared/victoryModal";
 import { Coin } from "../../components/assets/gameAssets";
 
-const CoinCountGame = ({ onExit, maxLevel, onSaveProgress, history }) => {
-  const bestTimes = getBestTimes(history);
-  const [gameState, setGameState] = useState("level-select");
+const CoinCountGame = ({ onExit, lastCompletedLevel = 0, onSaveProgress }) => {
+  const [gameState, setGameState] = useState("playing"); // Start playing immediately
   const [level, setLevel] = useState(1);
   const [target, setTarget] = useState(0);
   const [current, setCurrent] = useState(0);
-  const [elapsed, setElapsed] = useState(0);
+  const [elapsedTime, setElapsedTime] = useState(0);
   const startTimeRef = useRef(0);
 
   const formatMoney = (c) => `$${(c / 100).toFixed(2)}`;
+  const formatTime = (ms) => (ms / 1000).toFixed(2); //could put this in a util file
+
   const coins = [
     { id: "p", v: 1, t: "penny" },
     { id: "n", v: 5, t: "nickel" },
@@ -22,15 +22,24 @@ const CoinCountGame = ({ onExit, maxLevel, onSaveProgress, history }) => {
   ];
 
   useEffect(() => {
+    let interval = null;
     if (gameState === "playing") {
       startTimeRef.current = Date.now();
-      const i = setInterval(
-        () => setElapsed(Date.now() - startTimeRef.current),
+      interval = setInterval(
+        () => setElapsedTime(Date.now() - startTimeRef.current),
         50
       );
-      return () => clearInterval(i);
     }
+    return () => clearInterval(interval);
   }, [gameState]);
+
+  useEffect(() => {
+    if (lastCompletedLevel === 0) {
+      lastCompletedLevel = lastCompletedLevel + 1;
+    }
+
+    launchLevel(lastCompletedLevel);
+  }, []);
 
   const launchLevel = (lvl) => {
     const tgt =
@@ -50,7 +59,7 @@ const CoinCountGame = ({ onExit, maxLevel, onSaveProgress, history }) => {
     const next = current + v;
     setCurrent(next);
     if (next === target) {
-      onSaveProgress(level + 1, elapsed / 1000);
+      onSaveProgress(level + 1, elapsedTime / 1000);
       setGameState("scoring");
       setTimeout(
         () => setGameState(level === 15 ? "victory" : "levelComplete"),
@@ -67,20 +76,21 @@ const CoinCountGame = ({ onExit, maxLevel, onSaveProgress, history }) => {
   return (
     <div className="w-full h-screen bg-slate-950 flex flex-col relative font-sans text-white">
       <div className="absolute top-0 left-0 w-full p-6 flex justify-between pointer-events-none">
+        {" "}
         <div className="bg-slate-900/80 backdrop-blur px-6 py-3 rounded-2xl border border-slate-700 shadow-xl pointer-events-auto">
           <div className="text-cyan-400 text-xs font-bold tracking-widest mb-1">
-            TARGET
+            COIN COUNTER
           </div>
-          <div className="text-3xl font-black text-emerald-400 flex items-center gap-4">
-            {formatMoney(target)}
-            <div className="flex items-center gap-2 text-slate-400 text-xl font-mono border-l border-slate-700 pl-4 ml-2">
-              <Timer size={18} /> {(elapsed / 1000).toFixed(2)}s
+          <div className="text-xl font-bold flex items-center gap-4">
+            <span>Lvl {level}</span>
+            <div className="flex items-center gap-2 text-slate-400 font-mono border-l border-slate-700 pl-4 ml-2">
+              <Timer size={16} /> {formatTime(elapsedTime)}s
             </div>
           </div>
         </div>
         <button
-          onClick={() => setGameState("level-select")}
-          className="pointer-events-auto p-3 bg-slate-800 rounded-full hover:bg-rose-500"
+          onClick={onExit}
+          className="pointer-events-auto p-3 bg-slate-800 rounded-full hover:bg-rose-500 transition-colors"
         >
           <X size={20} />
         </button>
@@ -113,6 +123,14 @@ const CoinCountGame = ({ onExit, maxLevel, onSaveProgress, history }) => {
             />
           </svg>
           <div className="text-center">
+            <div className="bg-slate-900/80 backdrop-blur px-6 py-3 rounded-2xl border border-slate-700 shadow-xl pointer-events-auto">
+              <div className="text-cyan-400 text-xs font-bold tracking-widest mb-1">
+                TARGET
+              </div>
+              <div className="text-3xl font-black text-emerald-400 flex items-center gap-4">
+                ${target}
+              </div>
+            </div>
             <div className="text-slate-400 text-sm font-bold uppercase mb-1">
               Current
             </div>
