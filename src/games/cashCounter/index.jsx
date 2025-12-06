@@ -74,14 +74,15 @@ const CashCounterGame = ({
   return (
     <div className="w-full h-screen bg-slate-950 flex flex-col relative font-sans text-white">
       <div className="absolute top-0 left-0 w-full p-6 flex justify-between pointer-events-none">
+        {" "}
         <div className="bg-slate-900/80 backdrop-blur px-6 py-3 rounded-2xl border border-slate-700 shadow-xl pointer-events-auto">
           <div className="text-cyan-400 text-xs font-bold tracking-widest mb-1">
-            TARGET
+            CASH COUNTER
           </div>
-          <div className="text-3xl font-black text-emerald-400 flex items-center gap-4">
-            ${target}
-            <div className="flex items-center gap-2 text-slate-400 text-xl font-mono border-l border-slate-700 pl-4 ml-2">
-              <Timer size={18} /> {(elapsedTime / 1000).toFixed(2)}s
+          <div className="text-xl font-bold flex items-center gap-4">
+            <span>Lvl {level}</span>
+            <div className="flex items-center gap-2 text-slate-400 font-mono border-l border-slate-700 pl-4 ml-2">
+              <Timer size={16} /> {formatTime(elapsedTime)}s
             </div>
           </div>
         </div>
@@ -120,6 +121,14 @@ const CashCounterGame = ({
             />
           </svg>
           <div className="text-center">
+            <div className="bg-slate-900/80 backdrop-blur px-6 py-3 rounded-2xl border border-slate-700 shadow-xl pointer-events-auto">
+              <div className="text-cyan-400 text-xs font-bold tracking-widest mb-1">
+                TARGET
+              </div>
+              <div className="text-3xl font-black text-emerald-400 flex items-center gap-4">
+                ${target}
+              </div>
+            </div>
             <div className="text-slate-400 text-sm font-bold uppercase mb-1">
               Current
             </div>
