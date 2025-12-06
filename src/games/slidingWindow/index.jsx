@@ -22,7 +22,7 @@ const SlidingWindowGame = ({
   const [bracketPos, setBracketPos] = useState(0);
   const bracketPosRef = useRef(0);
   const [elapsedTime, setElapsedTime] = useState(0);
-
+  const [failMessage, setFailMessage] = useState("");
   const isDraggingBracket = useRef(false);
   const dragStartBracketX = useRef(0);
   const bracketStartRef = useRef(0);
@@ -318,7 +318,7 @@ const SlidingWindowGame = ({
       {(gameState === "levelComplete" || gameState === "failed") && (
         <VictoryModal
           state={gameState}
-          failReason={gameState === "failed" ? "Wrong jump!" : ""}
+          failReason={failMessage}
           time={formatTime(elapsedTime)}
           onAction={
             gameState === "failed"
