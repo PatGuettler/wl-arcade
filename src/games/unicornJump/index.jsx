@@ -156,7 +156,7 @@ const UnicornJumpGame = ({
       }}
       onWheel={(e) => viewport.applyZoom(e.deltaY * -0.001)}
     >
-      {/* Header */}
+      {/* Header @TODO: Make this a util*/}
       <div className="absolute top-0 left-0 w-full p-6 z-20 flex justify-between pointer-events-none">
         <div className="bg-slate-900/80 backdrop-blur px-6 py-3 rounded-2xl border border-slate-700 shadow-xl pointer-events-auto">
           <div className="text-cyan-400 text-xs font-bold tracking-widest mb-1">
