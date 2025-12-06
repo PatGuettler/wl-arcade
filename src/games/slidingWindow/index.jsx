@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Timer, X, ZoomIn, ZoomOut, GripVertical } from "lucide-react";
 import { useGameViewport } from "../../hooks/gameViewport";
-import LevelSelector from "../../components/shared/levelSelector";
 import { getBestTimes } from "../../utils/storage";
 import VictoryModal from "../../components/shared/victoryModal";
 import { handleNextLevel } from "../../utils/levelMap";

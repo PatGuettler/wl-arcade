@@ -115,7 +115,7 @@ const UnicornJumpGame = ({
         console.log("Completed Level:", level);
         console.log("Time:", finalTime);
         // Save the completed level (not level + 1)
-        onSaveProgress(level, finalTime);
+        onSaveProgress(level + 1, finalTime);
 
         setGameState("scoring");
         setTimeout(() => setGameState("levelComplete"), 1000);
