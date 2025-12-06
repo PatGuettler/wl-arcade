@@ -31,6 +31,8 @@ const SlidingWindowGame = ({ onExit, maxLevel, onSaveProgress, history }) => {
   const FULL_W = 96;
   const PADDING = 40;
 
+  const formatTime = (ms) => (ms / 1000).toFixed(2); //util
+
   useEffect(() => {
     if (gameState === "setup" || gameState === "playing") {
       startTimeRef.current = Date.now();
@@ -135,8 +137,6 @@ const SlidingWindowGame = ({ onExit, maxLevel, onSaveProgress, history }) => {
     dragStartBracketX.current = e.touches ? e.touches[0].clientX : e.clientX;
     bracketStartRef.current = bracketPosRef.current;
   };
-
-  const formatTime = (ms) => (ms / 1000).toFixed(2);
 
   return (
     <div

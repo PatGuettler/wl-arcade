@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Timer, X } from "lucide-react";
-import { getBestTimes } from "../../utils/storage";
 import VictoryModal from "../../components/shared/victoryModal";
 import { Bill } from "../../components/assets/gameAssets";
 
@@ -9,15 +8,15 @@ const CashCounterGame = ({
   lastCompletedLevel = 0,
   onSaveProgress,
 }) => {
-  const viewport = useGameViewport(1);
   const [gameState, setGameState] = useState("playing"); // Start playing immediately
   const [level, setLevel] = useState(1);
   const [target, setTarget] = useState(0);
   const [current, setCurrent] = useState(0);
-  const [elapsed, setElapsedTime] = useState(0);
+  const [elapsedTime, setElapsedTime] = useState(0);
   const startTimeRef = useRef(0);
 
   const bills = [1, 5, 10, 20, 50, 100];
+  const formatTime = (ms) => (ms / 1000).toFixed(2); //could put this in a util file
 
   useEffect(() => {
     let interval = null;
@@ -40,6 +39,7 @@ const CashCounterGame = ({
   }, []);
 
   const launchLevel = (lvl) => {
+    setLevel(lvl); // update current level immediately
     let tgt =
       lvl <= 3
         ? Math.floor(Math.random() * 20) + 1
@@ -57,7 +57,7 @@ const CashCounterGame = ({
     const next = current + v;
     setCurrent(next);
     if (next === target) {
-      onSaveProgress(level + 1, elapsed / 1000);
+      onSaveProgress(level, elapsedTime / 1000);
       setGameState("scoring");
       setTimeout(
         () => setGameState(level === 15 ? "victory" : "levelComplete"),
@@ -81,13 +81,13 @@ const CashCounterGame = ({
           <div className="text-3xl font-black text-emerald-400 flex items-center gap-4">
             ${target}
             <div className="flex items-center gap-2 text-slate-400 text-xl font-mono border-l border-slate-700 pl-4 ml-2">
-              <Timer size={18} /> {(elapsed / 1000).toFixed(2)}s
+              <Timer size={18} /> {(elapsedTime / 1000).toFixed(2)}s
             </div>
           </div>
         </div>
         <button
-          onClick={() => setGameState("level-select")}
-          className="pointer-events-auto p-3 bg-slate-800 rounded-full hover:bg-rose-500"
+          onClick={onExit}
+          className="pointer-events-auto p-3 bg-slate-800 rounded-full hover:bg-rose-500 transition-colors"
         >
           <X size={20} />
         </button>
