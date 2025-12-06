@@ -4,27 +4,40 @@ import { getBestTimes } from "../../utils/storage";
 import VictoryModal from "../../components/shared/victoryModal";
 import { Bill } from "../../components/assets/gameAssets";
 
-const CashCounterGame = ({ onExit, maxLevel, onSaveProgress, history }) => {
-  const bestTimes = getBestTimes(history);
-  const [gameState, setGameState] = useState("level-select");
+const CashCounterGame = ({
+  onExit,
+  lastCompletedLevel = 0,
+  onSaveProgress,
+}) => {
+  const viewport = useGameViewport(1);
+  const [gameState, setGameState] = useState("playing"); // Start playing immediately
   const [level, setLevel] = useState(1);
   const [target, setTarget] = useState(0);
   const [current, setCurrent] = useState(0);
-  const [elapsed, setElapsed] = useState(0);
+  const [elapsed, setElapsedTime] = useState(0);
   const startTimeRef = useRef(0);
 
   const bills = [1, 5, 10, 20, 50, 100];
 
   useEffect(() => {
+    let interval = null;
     if (gameState === "playing") {
       startTimeRef.current = Date.now();
-      const i = setInterval(
-        () => setElapsed(Date.now() - startTimeRef.current),
+      interval = setInterval(
+        () => setElapsedTime(Date.now() - startTimeRef.current),
         50
       );
-      return () => clearInterval(i);
     }
+    return () => clearInterval(interval);
   }, [gameState]);
+
+  useEffect(() => {
+    if (lastCompletedLevel === 0) {
+      lastCompletedLevel = lastCompletedLevel + 1;
+    }
+
+    launchLevel(lastCompletedLevel);
+  }, []);
 
   const launchLevel = (lvl) => {
     let tgt =

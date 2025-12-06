@@ -27,31 +27,39 @@ export default function App() {
     }
   }, []);
 
-  // Handle Android back button
   useEffect(() => {
-    const backButtonListener = CapacitorApp.addListener(
-      "backButton",
-      ({ canGoBack }) => {
-        // Handle navigation based on current view
-        if (currentView === "game") {
-          goBack();
-        } else if (currentView === "category") {
-          goBack();
-        } else if (currentView === "profile") {
-          goBack();
-        } else if (currentView === "dashboard") {
-          // On dashboard, exit the app
-          CapacitorApp.exitApp();
-        } else if (currentView === "login") {
-          // On login screen, exit the app
-          CapacitorApp.exitApp();
+    let backButtonListener;
+
+    // addListener returns a Promise, so we need to await it
+    const setupListener = async () => {
+      backButtonListener = await CapacitorApp.addListener(
+        "backButton",
+        ({ canGoBack }) => {
+          // Handle navigation based on current view
+          if (currentView === "game") {
+            goBack();
+          } else if (currentView === "category") {
+            goBack();
+          } else if (currentView === "profile") {
+            goBack();
+          } else if (currentView === "dashboard") {
+            // On dashboard, exit the app
+            CapacitorApp.exitApp();
+          } else if (currentView === "login") {
+            // On login screen, exit the app
+            CapacitorApp.exitApp();
+          }
         }
-      }
-    );
+      );
+    };
+
+    setupListener();
 
     // Cleanup listener on unmount
     return () => {
-      backButtonListener.remove();
+      if (backButtonListener) {
+        backButtonListener.remove();
+      }
     };
   }, [currentView]); // Re-register when currentView changes
 
