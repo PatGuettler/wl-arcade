@@ -3,6 +3,7 @@ apply plugin: 'com.android.application'
 android {
     namespace "com.grapegames.wlarcade"
     compileSdkVersion rootProject.ext.compileSdkVersion
+
     defaultConfig {
         applicationId "com.grapegames.wlarcade"
         minSdkVersion rootProject.ext.minSdkVersion
@@ -11,13 +12,25 @@ android {
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
-             // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
-             // Default: https://android.googlesource.com/platform/frameworks/base/+/282e181b58cf72b6ca770dc7ca5f91f135444502/tools/aapt/AaptAssets.cpp#61
             ignoreAssetsPattern '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        release {
+            // for github only
+            if (System.getenv("SIGNING_STORE_PASSWORD")) {
+                storeFile file("release.keystore") // In yaml file
+                storePassword System.getenv("SIGNING_STORE_PASSWORD")
+                keyAlias System.getenv("SIGNING_KEY_ALIAS")
+                keyPassword System.getenv("SIGNING_KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         release {
+            signingConfig signingConfigs.release
+
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
