@@ -61,10 +61,7 @@ const CoinCountGame = ({ onExit, lastCompletedLevel = 0, onSaveProgress }) => {
     if (next === target) {
       onSaveProgress(level, elapsedTime / 1000);
       setGameState("scoring");
-      setTimeout(
-        () => setGameState(level === 15 ? "victory" : "levelComplete"),
-        1000
-      );
+      setTimeout(() => setGameState("levelComplete"), 1000);
     } else if (next > target) {
       setGameState("scoring");
       setTimeout(() => setGameState("failed"), 1000);

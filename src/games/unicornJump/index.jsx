@@ -113,12 +113,7 @@ const UnicornJumpGame = ({
       setVisitedIndices((p) => [...p, idx]);
       if (idx === levelData.length) {
         const finalTime = elapsedTime / 1000;
-
-        console.log("=== LEVEL COMPLETE ===");
-        console.log("Completed Level:", level);
-        console.log("Time:", finalTime);
         onSaveProgress(level, finalTime);
-
         setGameState("scoring");
         setTimeout(() => setGameState("levelComplete"), 1000);
       }
