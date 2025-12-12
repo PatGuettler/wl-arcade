@@ -1,3 +1,4 @@
+// src/games/unicornJump/index.jsx
 import React, { useState, useEffect, useRef } from "react";
 import { Timer, X, ZoomIn, ZoomOut, CheckCircle } from "lucide-react";
 import { useGameViewport } from "../../hooks/gameViewport";
@@ -8,9 +9,10 @@ const UnicornJumpGame = ({
   onExit,
   lastCompletedLevel = 0,
   onSaveProgress,
+  calcCoins, // NEW: Receive the calculator from App.jsx
 }) => {
   const viewport = useGameViewport(1);
-  const [gameState, setGameState] = useState("playing"); // Start playing immediately
+  const [gameState, setGameState] = useState("playing");
   const [level, setLevel] = useState(1);
   const [levelData, setLevelData] = useState([]);
   const [visitedIndices, setVisitedIndices] = useState([]);
@@ -19,9 +21,8 @@ const UnicornJumpGame = ({
   const [nodePositions, setNodePositions] = useState([]);
   const startTimeRef = useRef(0);
 
-  // Updated path parameters for smoother S-curve and closer nodes
-  const NODE_SPACING_Y = 110; // closer nodes vertically
-  const PATH_WIDTH = 150; // narrower path
+  const NODE_SPACING_Y = 110;
+  const PATH_WIDTH = 150;
 
   useEffect(() => {
     let interval = null;
@@ -39,12 +40,11 @@ const UnicornJumpGame = ({
     if (lastCompletedLevel === 0) {
       lastCompletedLevel = lastCompletedLevel + 1;
     }
-
     launchLevel(lastCompletedLevel);
   }, []);
 
   const launchLevel = (lvl) => {
-    setLevel(lvl); // update current level immediately
+    setLevel(lvl);
     const len = 15 + lvl * 5;
     const arr = new Array(len).fill(null);
     let curr = 0,
@@ -68,16 +68,12 @@ const UnicornJumpGame = ({
       }
     }
 
-    //path drawer
     const positions = [];
     for (let i = 0; i <= len; i++) {
-      const t = i / len; // 0-1
+      const t = i / len;
       const y = i * NODE_SPACING_Y;
-
-      // Small horizontal deviation using sine
       const x =
-        window.innerWidth / 6 + Math.sin(t * Math.PI * 3) * (PATH_WIDTH * 1); // 0.5 = less swing
-
+        window.innerWidth / 6 + Math.sin(t * Math.PI * 3) * (PATH_WIDTH * 1);
       positions.push({ x, y });
     }
 
@@ -91,7 +87,6 @@ const UnicornJumpGame = ({
     setGameState("playing");
   };
 
-  // Auto-center camera
   useEffect(() => {
     if (gameState === "playing" && nodePositions[currentIndex]) {
       const pos = nodePositions[currentIndex];
@@ -151,7 +146,6 @@ const UnicornJumpGame = ({
       }}
       onWheel={(e) => viewport.applyZoom(e.deltaY * -0.001)}
     >
-      {/* Header @TODO: Make this a util*/}
       <div className="absolute top-0 left-0 w-full p-6 z-20 flex justify-between pointer-events-none">
         <div className="bg-slate-900/80 backdrop-blur px-6 py-3 rounded-2xl border border-slate-700 shadow-xl pointer-events-auto">
           <div className="text-cyan-400 text-xs font-bold tracking-widest mb-1">
@@ -171,7 +165,6 @@ const UnicornJumpGame = ({
           <X size={20} />
         </button>
       </div>
-      {/* Zoom Controls */}
       <div className="absolute bottom-6 right-6 z-30 flex flex-col gap-2 pointer-events-auto">
         <button
           onClick={() => viewport.applyZoom(0.1)}
@@ -186,7 +179,6 @@ const UnicornJumpGame = ({
           <ZoomOut />
         </button>
       </div>
-      {/* Game World */}
       <div
         className="absolute inset-0 origin-center will-change-transform"
         style={{
@@ -220,7 +212,6 @@ const UnicornJumpGame = ({
               const prevPos = nodePositions[i - 1] || pos;
               const nextNextPos = nodePositions[i + 2] || nextPos;
 
-              // Control points for smooth curve
               const cp1x = pos.x + (nextPos.x - prevPos.x) * 0.25;
               const cp1y = pos.y + (nextPos.y - prevPos.y) * 0.25;
               const cp2x = nextPos.x - (nextNextPos.x - pos.x) * 0.25;
@@ -246,7 +237,6 @@ const UnicornJumpGame = ({
             })}
           </svg>
 
-          {/* Nodes */}
           {levelData.map((val, idx) => {
             const pos = nodePositions[idx];
             if (!pos) return null;
@@ -299,7 +289,6 @@ const UnicornJumpGame = ({
             </div>
           )}
 
-          {/* Goal */}
           {(() => {
             const lastIdx = levelData.length;
             const pos = nodePositions[lastIdx];
@@ -334,10 +323,14 @@ const UnicornJumpGame = ({
           state={gameState}
           failReason={gameState === "failed" ? "Wrong jump!" : ""}
           time={formatTime(elapsedTime)}
+          /* NEW: Pass the coins to the modal using the calculator */
+          coinsEarned={
+            gameState === "levelComplete" && calcCoins ? calcCoins(level) : 0
+          }
           onAction={
             gameState === "failed"
-              ? () => launchLevel(level) // Retry same level
-              : () => launchLevel(level + 1) // Move to next level
+              ? () => launchLevel(level)
+              : () => launchLevel(level + 1)
           }
           isNext={gameState === "levelComplete"}
         />
