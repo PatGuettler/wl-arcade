@@ -44,7 +44,7 @@ const ShopView = ({ userData, onBuy, onEquip, onBack }) => {
                 }`}
               >
                 <div className="w-24 h-24 mb-4">
-                  {/* In a real app, you'd pass item.id to UnicornSVG to change its look */}
+                  {/* @TODO: pass item.id to UnicornSVG to change its look */}
                   <UnicornSVG />
                 </div>
                 <h3 className="font-bold text-white mb-1">{item.name}</h3>

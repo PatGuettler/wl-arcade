@@ -20,7 +20,6 @@ const HomeView = ({
     <div className="w-full h-screen bg-slate-950 overflow-hidden relative flex flex-col items-center select-none">
       {/* Top Bar */}
       <div className="w-full p-4 flex justify-between items-center z-30 bg-slate-900/50 backdrop-blur-md border-b border-white/10">
-        {/* UPDATED: User Profile Button */}
         <button
           onClick={onProfile}
           className="flex items-center gap-3 text-left hover:bg-white/10 p-2 -ml-2 rounded-2xl transition-all active:scale-95 group cursor-pointer"
@@ -49,7 +48,6 @@ const HomeView = ({
 
       {/* Main Avatar Display */}
       <div className="flex-1 flex flex-col items-center justify-center w-full max-w-md relative z-10">
-        {/* Background Glow (Pointer events none allows clicking through) */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-cyan-500/10 rounded-full blur-[100px] pointer-events-none" />
 
         <div className="text-center mb-8 animate-pop-in relative z-20">

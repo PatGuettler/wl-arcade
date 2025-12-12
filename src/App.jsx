@@ -7,7 +7,6 @@ import SlidingWindowGame from "./games/slidingWindow";
 import CoinCountGame from "./games/coinCount";
 import CashCounterGame from "./games/cashCounter";
 import ProfileView from "./components/shared/profileView";
-// Ensure this path matches where you saved HomeView
 import HomeView from "./components/shared/homeView";
 import ShopView from "./components/shared/shopView";
 import { CATEGORIES } from "./games/gameConfig";
@@ -85,11 +84,7 @@ export default function App() {
     setCurrentView("home");
   };
 
-  // --- NEW: Smart Play Logic to fix the crash ---
   const handlePlay = () => {
-    // 1. Determine which category to show.
-    // Default to the first one ('number') if no specific logic exists yet.
-    // In a real app, you might check userData to see which category was last played.
     const targetCategory = CATEGORIES[0].id;
 
     // 2. Set the category state BEFORE switching views
