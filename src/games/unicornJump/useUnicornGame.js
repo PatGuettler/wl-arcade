@@ -42,8 +42,6 @@ export const useUnicornGame = (
       const newPanY = targetScreenY - pos.y * viewport.zoom;
       viewport.setPan({ x: newPanX, y: newPanY });
     }
-    // FIX: Changed 'viewport' to 'viewport.zoom' and 'viewport.setPan'
-    // This prevents the infinite loop caused by the viewport object reference changing on every render
   }, [currentIndex, gameState, nodePositions, viewport.zoom, viewport.setPan]);
 
   const launchLevel = (lvl) => {
