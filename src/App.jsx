@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { App as CapacitorApp } from "@capacitor/app";
 
-import { getDB, saveDB } from "./utils/storage";
+import { getDB, saveDB, UNICORNS } from "./utils/storage";
 import UnicornJumpGame from "./games/unicornJump";
 import SlidingWindowGame from "./games/slidingWindow";
 import CoinCountGame from "./games/coinCount";
@@ -9,6 +9,8 @@ import CashCounterGame from "./games/cashCounter";
 import ProfileView from "./components/shared/profileView";
 import HomeView from "./components/shared/homeView";
 import ShopView from "./components/shared/shopView";
+import UnicornAlleyView from "./components/shared/unicornAlleyView";
+import RoomView from "./components/shared/roomView";
 import { CATEGORIES } from "./games/gameConfig";
 import LoginView from "./components/shared/loginView";
 import CategoryView from "./components/shared/categoryView";
@@ -19,6 +21,7 @@ export default function App() {
   const [user, setUser] = useState("");
   const [activeCategory, setActiveCategory] = useState(null);
   const [activeGame, setActiveGame] = useState(null);
+  const [activeRoomUnicorn, setActiveRoomUnicorn] = useState(null);
   const [userData, setUserData] = useState(null);
 
   const goHome = () => setCurrentView("home");
@@ -36,6 +39,7 @@ export default function App() {
     if (!data.coins) data.coins = 0;
     if (!data.ownedUnicorns) data.ownedUnicorns = ["sparkle"];
     if (!data.equippedUnicorn) data.equippedUnicorn = "sparkle";
+    if (!data.furniture) data.furniture = { inventory: {}, placements: {} };
     return data;
   };
 
@@ -46,11 +50,15 @@ export default function App() {
         "backButton",
         ({ canGoBack }) => {
           if (
-            currentView === "game" ||
-            currentView === "category" ||
-            currentView === "dashboard" ||
-            currentView === "profile" ||
-            currentView === "shop"
+            [
+              "game",
+              "category",
+              "dashboard",
+              "profile",
+              "shop",
+              "alley",
+              "room",
+            ].includes(currentView)
           ) {
             goBack();
           } else if (currentView === "home" || currentView === "login") {
@@ -72,9 +80,10 @@ export default function App() {
     db.lastUser = user;
     if (!db.users[user]) {
       db.users[user] = {
-        coins: 0,
+        coins: 100,
         ownedUnicorns: ["sparkle"],
         equippedUnicorn: "sparkle",
+        furniture: { inventory: {}, placements: {} },
         unicorn: { maxLevel: 0, times: [] },
         sliding: { maxLevel: 0, times: [] },
         coin: { maxLevel: 0, times: [] },
@@ -89,17 +98,13 @@ export default function App() {
     setCurrentView("home");
   };
 
-  const handlePlay = () => {
-    setCurrentView("dashboard");
-  };
+  const handlePlay = () => setCurrentView("dashboard");
 
   const handleSaveProgress = (gameKey, nextLvl, time) => {
     const db = getDB();
     const currentUserData = ensureDataStructure(db.users[user]);
-
     const coinsEarned = 10 + nextLvl * 5;
     currentUserData.coins += coinsEarned;
-
     if (nextLvl > currentUserData[gameKey].maxLevel)
       currentUserData[gameKey].maxLevel = nextLvl;
     currentUserData[gameKey].times.push({
@@ -115,7 +120,6 @@ export default function App() {
   const handleSpendCoins = (amount) => {
     const db = getDB();
     const currentUserData = ensureDataStructure(db.users[user]);
-
     if (currentUserData.coins >= amount) {
       currentUserData.coins -= amount;
       db.users[user] = currentUserData;
@@ -129,10 +133,56 @@ export default function App() {
   const handleBuyUnicorn = (id, cost) => {
     const db = getDB();
     const currentUserData = ensureDataStructure(db.users[user]);
-
     if (currentUserData.coins >= cost) {
       currentUserData.coins -= cost;
       currentUserData.ownedUnicorns.push(id);
+      db.users[user] = currentUserData;
+      saveDB(db);
+      setUserData({ ...currentUserData });
+    }
+  };
+
+  const handleBuyFurniture = (itemId, cost) => {
+    const db = getDB();
+    const currentUserData = ensureDataStructure(db.users[user]);
+    if (currentUserData.coins >= cost) {
+      currentUserData.coins -= cost;
+      const currentQty = currentUserData.furniture.inventory[itemId] || 0;
+      currentUserData.furniture.inventory[itemId] = currentQty + 1;
+
+      db.users[user] = currentUserData;
+      saveDB(db);
+      setUserData({ ...currentUserData });
+    }
+  };
+
+  const handlePlaceItem = (unicornId, itemInstance) => {
+    const db = getDB();
+    const currentUserData = ensureDataStructure(db.users[user]);
+
+    if (!currentUserData.furniture.placements[unicornId]) {
+      currentUserData.furniture.placements[unicornId] = [];
+    }
+
+    const list = currentUserData.furniture.placements[unicornId].filter(
+      (i) => i.instanceId !== itemInstance.instanceId
+    );
+    list.push(itemInstance);
+    currentUserData.furniture.placements[unicornId] = list;
+
+    db.users[user] = currentUserData;
+    saveDB(db);
+    setUserData({ ...currentUserData });
+  };
+
+  const handleRemoveItem = (unicornId, instanceId) => {
+    const db = getDB();
+    const currentUserData = ensureDataStructure(db.users[user]);
+    if (currentUserData.furniture.placements[unicornId]) {
+      currentUserData.furniture.placements[unicornId] =
+        currentUserData.furniture.placements[unicornId].filter(
+          (i) => i.instanceId !== instanceId
+        );
       db.users[user] = currentUserData;
       saveDB(db);
       setUserData({ ...currentUserData });
@@ -164,18 +214,27 @@ export default function App() {
     setCurrentView("game");
   };
 
+  const enterRoom = (unicornId) => {
+    setActiveRoomUnicorn(unicornId);
+    setCurrentView("room");
+  };
+
   const goBack = () => {
     if (currentView === "game") setCurrentView("category");
-    else if (currentView === "category")
-      setCurrentView("dashboard"); // Category -> Dashboard
-    else if (currentView === "dashboard")
-      setCurrentView("home"); // Dashboard -> Home
-    else if (currentView === "profile" || currentView === "shop")
+    else if (currentView === "category") setCurrentView("dashboard");
+    else if (currentView === "dashboard") setCurrentView("home");
+    else if (
+      currentView === "profile" ||
+      currentView === "shop" ||
+      currentView === "alley"
+    )
       setCurrentView("home");
+    else if (currentView === "room") setCurrentView("alley");
   };
 
   const calculateCoins = (lvl) => 10 + lvl * 5;
 
+  // View Routing
   if (currentView === "login")
     return (
       <LoginView user={user} setUser={setUser} handleLogin={handleLogin} />
@@ -189,6 +248,7 @@ export default function App() {
         onPlay={handlePlay}
         onShop={() => setCurrentView("shop")}
         onProfile={() => setCurrentView("profile")}
+        onAlley={() => setCurrentView("alley")}
         handleLogout={handleLogout}
         onHome={goHome}
       />
@@ -199,8 +259,31 @@ export default function App() {
       <ShopView
         userData={userData}
         onBuy={handleBuyUnicorn}
+        onBuyFurniture={handleBuyFurniture}
         onEquip={handleEquipUnicorn}
         onBack={() => setCurrentView("home")}
+        onHome={goHome}
+      />
+    );
+
+  if (currentView === "alley")
+    return (
+      <UnicornAlleyView
+        userData={userData}
+        onEnterRoom={enterRoom}
+        onBack={() => setCurrentView("home")}
+        onHome={goHome}
+      />
+    );
+
+  if (currentView === "room")
+    return (
+      <RoomView
+        unicornId={activeRoomUnicorn}
+        userData={userData}
+        onPlaceItem={handlePlaceItem}
+        onRemoveItem={handleRemoveItem}
+        onBack={() => setCurrentView("alley")}
         onHome={goHome}
       />
     );
@@ -229,6 +312,7 @@ export default function App() {
     );
 
   if (currentView === "game") {
+    // ... existing game logic ...
     if (activeGame === "unicorn")
       return (
         <UnicornJumpGame
