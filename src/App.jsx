@@ -12,6 +12,7 @@ import ShopView from "./components/shared/shopView";
 import { CATEGORIES } from "./games/gameConfig";
 import LoginView from "./components/shared/loginView";
 import CategoryView from "./components/shared/categoryView";
+import DashBoardView from "./components/shared/dashboardView";
 
 export default function App() {
   const [currentView, setCurrentView] = useState("login");
@@ -19,6 +20,8 @@ export default function App() {
   const [activeCategory, setActiveCategory] = useState(null);
   const [activeGame, setActiveGame] = useState(null);
   const [userData, setUserData] = useState(null);
+
+  const goHome = () => setCurrentView("home");
 
   useEffect(() => {
     const db = getDB();
@@ -42,12 +45,14 @@ export default function App() {
       backButtonListener = await CapacitorApp.addListener(
         "backButton",
         ({ canGoBack }) => {
-          if (currentView === "game") {
+          if (
+            currentView === "game" ||
+            currentView === "category" ||
+            currentView === "dashboard" ||
+            currentView === "profile" ||
+            currentView === "shop"
+          ) {
             goBack();
-          } else if (currentView === "category") {
-            goBack();
-          } else if (currentView === "profile" || currentView === "shop") {
-            setCurrentView("home");
           } else if (currentView === "home" || currentView === "login") {
             CapacitorApp.exitApp();
           }
@@ -85,20 +90,13 @@ export default function App() {
   };
 
   const handlePlay = () => {
-    const targetCategory = CATEGORIES[0].id;
-
-    // 2. Set the category state BEFORE switching views
-    setActiveCategory(targetCategory);
-
-    // 3. Navigate to the category view
-    setCurrentView("category");
+    setCurrentView("dashboard");
   };
 
   const handleSaveProgress = (gameKey, nextLvl, time) => {
     const db = getDB();
     const currentUserData = ensureDataStructure(db.users[user]);
 
-    // Calculate coins: 10 base + 5 per level
     const coinsEarned = 10 + nextLvl * 5;
     currentUserData.coins += coinsEarned;
 
@@ -112,6 +110,20 @@ export default function App() {
     db.users[user] = currentUserData;
     saveDB(db);
     setUserData({ ...currentUserData });
+  };
+
+  const handleSpendCoins = (amount) => {
+    const db = getDB();
+    const currentUserData = ensureDataStructure(db.users[user]);
+
+    if (currentUserData.coins >= amount) {
+      currentUserData.coins -= amount;
+      db.users[user] = currentUserData;
+      saveDB(db);
+      setUserData({ ...currentUserData });
+      return true;
+    }
+    return false;
   };
 
   const handleBuyUnicorn = (id, cost) => {
@@ -146,20 +158,23 @@ export default function App() {
     setActiveCategory(catId);
     setCurrentView("category");
   };
+
   const selectGame = (gameId) => {
     setActiveGame(gameId);
     setCurrentView("game");
   };
+
   const goBack = () => {
     if (currentView === "game") setCurrentView("category");
-    else if (currentView === "category") setCurrentView("home");
+    else if (currentView === "category")
+      setCurrentView("dashboard"); // Category -> Dashboard
+    else if (currentView === "dashboard")
+      setCurrentView("home"); // Dashboard -> Home
     else if (currentView === "profile" || currentView === "shop")
       setCurrentView("home");
   };
 
   const calculateCoins = (lvl) => 10 + lvl * 5;
-
-  // --- VIEWS ---
 
   if (currentView === "login")
     return (
@@ -170,11 +185,12 @@ export default function App() {
     return (
       <HomeView
         user={user}
-        userData={userData || { coins: 0, equippedUnicorn: "sparkle" }} // Fallback to prevent HomeView crash
-        onPlay={handlePlay} // Use the new handler here
+        userData={userData || { coins: 0, equippedUnicorn: "sparkle" }}
+        onPlay={handlePlay}
         onShop={() => setCurrentView("shop")}
         onProfile={() => setCurrentView("profile")}
         handleLogout={handleLogout}
+        onHome={goHome}
       />
     );
 
@@ -185,6 +201,7 @@ export default function App() {
         onBuy={handleBuyUnicorn}
         onEquip={handleEquipUnicorn}
         onBack={() => setCurrentView("home")}
+        onHome={goHome}
       />
     );
 
@@ -194,6 +211,20 @@ export default function App() {
         user={user}
         data={userData}
         onBack={() => setCurrentView("home")}
+        onHome={goHome}
+      />
+    );
+
+  if (currentView === "dashboard")
+    return (
+      <DashBoardView
+        user={user}
+        userData={userData}
+        selectCategory={selectCategory}
+        setCurrentView={setCurrentView}
+        handleLogout={handleLogout}
+        categories={CATEGORIES}
+        onHome={goHome}
       />
     );
 
@@ -207,6 +238,9 @@ export default function App() {
             handleSaveProgress("unicorn", lvl, time)
           }
           calcCoins={calculateCoins}
+          coins={userData.coins}
+          onSpendCoins={handleSpendCoins}
+          onHome={goHome}
         />
       );
     if (activeGame === "sliding")
@@ -218,6 +252,7 @@ export default function App() {
             handleSaveProgress("sliding", lvl, time)
           }
           calcCoins={calculateCoins}
+          onHome={goHome}
         />
       );
     if (activeGame === "coin")
@@ -227,6 +262,7 @@ export default function App() {
           lastCompletedLevel={userData.coin.maxLevel + 1}
           onSaveProgress={(lvl, time) => handleSaveProgress("coin", lvl, time)}
           calcCoins={calculateCoins}
+          onHome={goHome}
         />
       );
     if (activeGame === "cash")
@@ -236,12 +272,12 @@ export default function App() {
           lastCompletedLevel={userData.cash.maxLevel + 1}
           onSaveProgress={(lvl, time) => handleSaveProgress("cash", lvl, time)}
           calcCoins={calculateCoins}
+          onHome={goHome}
         />
       );
     return <div className="text-white">Game Not Found</div>;
   }
 
-  // Categories / Map View
   if (currentView === "category")
     return (
       <CategoryView
@@ -249,10 +285,11 @@ export default function App() {
         user={user}
         setCurrentView={setCurrentView}
         handleLogout={handleLogout}
-        activeCategory={activeCategory} // This must be set!
+        activeCategory={activeCategory}
         goBack={goBack}
         userData={userData}
         selectGame={selectGame}
+        onHome={goHome}
       />
     );
 

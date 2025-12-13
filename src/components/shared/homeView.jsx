@@ -1,7 +1,8 @@
 import React from "react";
-import { Play, ShoppingBag, Trophy, User as UserIcon } from "lucide-react";
+import { Play, ShoppingBag, Trophy } from "lucide-react";
 import { UNICORNS } from "../../utils/storage";
 import { UnicornSVG } from "../assets/gameAssets";
+import GlobalHeader from "./globalHeader"; // Import the new header
 
 const HomeView = ({
   user,
@@ -18,33 +19,12 @@ const HomeView = ({
 
   return (
     <div className="w-full h-screen bg-slate-950 overflow-hidden relative flex flex-col items-center select-none">
-      {/* Top Bar */}
-      <div className="w-full p-4 flex justify-between items-center z-30 bg-slate-900/50 backdrop-blur-md border-b border-white/10">
-        <button
-          onClick={onProfile}
-          className="flex items-center gap-3 text-left hover:bg-white/10 p-2 -ml-2 rounded-2xl transition-all active:scale-95 group cursor-pointer"
-        >
-          <div className="w-10 h-10 bg-gradient-to-br from-cyan-400 to-blue-600 rounded-full flex items-center justify-center shadow-lg border-2 border-white/20 group-hover:border-white/40 transition-colors">
-            <UserIcon size={20} className="text-white" />
-          </div>
-          <div>
-            <div className="text-xs text-cyan-400 font-bold uppercase tracking-wider group-hover:text-cyan-300">
-              Player
-            </div>
-            <div className="text-white font-black text-lg leading-none">
-              {user}
-            </div>
-          </div>
-        </button>
-
-        {/* Coin Display */}
-        <div className="bg-slate-900 border-2 border-yellow-500/50 rounded-full px-4 py-1 flex items-center gap-2 shadow-[0_0_15px_rgba(234,179,8,0.3)]">
-          <div className="text-xl">🪙</div>
-          <div className="text-yellow-400 font-black text-xl">
-            {userData?.coins?.toLocaleString() || 0}
-          </div>
-        </div>
-      </div>
+      {/* Standard Header */}
+      <GlobalHeader
+        user={user}
+        coins={userData?.coins || 0}
+        onProfileClick={onProfile}
+      />
 
       {/* Main Avatar Display */}
       <div className="flex-1 flex flex-col items-center justify-center w-full max-w-md relative z-10">
