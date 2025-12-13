@@ -2,7 +2,7 @@ import React from "react";
 import { Play, ShoppingBag, Trophy } from "lucide-react";
 import { UNICORNS } from "../../utils/storage";
 import { UnicornSVG } from "../assets/gameAssets";
-import GlobalHeader from "./globalHeader"; // Import the new header
+import GlobalHeader from "./globalHeader";
 
 const HomeView = ({
   user,

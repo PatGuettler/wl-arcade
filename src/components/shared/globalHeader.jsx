@@ -6,7 +6,7 @@ const GlobalHeader = ({
   coins = 0,
   onProfileClick,
   onBack,
-  onHome, // NEW: Handler for Home button
+  onHome,
   isSubScreen = false,
   title,
 }) => {

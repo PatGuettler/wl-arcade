@@ -52,7 +52,6 @@ const UnicornJumpGame = ({
       startLevel = startLevel + 1;
     }
     launchLevel(startLevel);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

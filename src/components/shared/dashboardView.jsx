@@ -4,7 +4,7 @@ import GlobalHeader from "./globalHeader";
 const DashBoardView = ({
   selectCategory,
   user,
-  userData, // Received from App.jsx
+  userData,
   setCurrentView,
   handleLogout,
   categories,
