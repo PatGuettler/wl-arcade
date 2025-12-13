@@ -4,6 +4,7 @@ import { Timer, X, ZoomIn, ZoomOut, CheckCircle } from "lucide-react";
 import { useGameViewport } from "../../hooks/gameViewport";
 import { UnicornSVG } from "../../components/assets/gameAssets";
 import VictoryModal from "../../components/shared/victoryModal";
+import UnicornTutorial from "./unicornTutorial";
 
 const UnicornJumpGame = ({
   onExit,
@@ -276,7 +277,13 @@ const UnicornJumpGame = ({
               </div>
             );
           })}
-
+          <UnicornTutorial
+            level={level}
+            currentIndex={currentIndex}
+            gameState={gameState}
+            nodePositions={nodePositions}
+            levelData={levelData}
+          />
           {nodePositions[currentIndex] && (
             <div
               className="absolute pointer-events-none z-30 w-20 h-20 transition-all duration-500 ease-in-out filter drop-shadow-2xl"
