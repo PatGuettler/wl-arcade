@@ -8,7 +8,6 @@ const CoinCountGame = ({
   lastCompletedLevel = 0,
   onSaveProgress,
   calcCoins,
-  coins,
   onSpendCoins,
 }) => {
   const [gameState, setGameState] = useState("playing"); // Start playing immediately
