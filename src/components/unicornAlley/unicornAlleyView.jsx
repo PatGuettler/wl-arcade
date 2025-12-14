@@ -8,12 +8,12 @@ import alleyMap from "./unicornAlleyMap.jpeg";
 // CONFIGURATION: Adjust these percentages to match the houses in your image!
 // format: { top: '10%', left: '20%' }
 const HOUSE_POSITIONS = [
-  { top: "15%", left: "20%" }, // Sparkle
-  { top: "28%", left: "70%" }, // Rainbow Dash
-  { top: "42%", left: "25%" }, // Stardust
-  { top: "58%", left: "65%" }, // Nimbus
+  { top: "75%", left: "60%" }, // Sparkle
+  { top: "82%", left: "80%" }, // Rainbow Dash
+  { top: "82%", left: "20%" }, // Stardust
+  { top: "58%", left: "55%" }, // Nimbus
   { top: "72%", left: "30%" }, // Dreamer
-  { top: "50%", left: "50%" }, // Mystic
+  { top: "85%", left: "50%" }, // Mystic
 ];
 
 const UnicornAlleyView = ({ userData, onEnterRoom, onBack, onHome }) => {
