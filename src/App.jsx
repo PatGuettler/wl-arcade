@@ -9,8 +9,8 @@ import CashCounterGame from "./games/cashCounter";
 import ProfileView from "./components/shared/profileView";
 import HomeView from "./components/shared/homeView";
 import ShopView from "./components/shared/shopView";
-import UnicornAlleyView from "./components/shared/unicornAlleyView";
-import RoomView from "./components/shared/roomView";
+import UnicornAlleyView from "./components/unicornAlley/unicornAlleyView";
+import RoomView from "./components/unicornAlley/roomView";
 import { CATEGORIES } from "./games/gameConfig";
 import LoginView from "./components/shared/loginView";
 import CategoryView from "./components/shared/categoryView";
@@ -80,7 +80,7 @@ export default function App() {
     db.lastUser = user;
     if (!db.users[user]) {
       db.users[user] = {
-        coins: 100,
+        coins: 100000000000,
         ownedUnicorns: ["sparkle"],
         equippedUnicorn: "sparkle",
         furniture: { inventory: {}, placements: {} },

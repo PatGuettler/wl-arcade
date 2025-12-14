@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Move, Briefcase, Plus, X } from "lucide-react";
 import { UNICORNS, FURNITURE } from "../../utils/storage";
-import GlobalHeader from "./globalHeader";
+import GlobalHeader from "../shared/globalHeader";
 
 const RoomView = ({
   unicornId,
