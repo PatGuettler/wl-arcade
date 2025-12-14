@@ -1,4 +1,3 @@
-import { CATEGORIES } from "../../games/gameConfig";
 import GlobalHeader from "./globalHeader";
 
 const DashBoardView = ({

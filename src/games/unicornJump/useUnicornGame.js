@@ -19,7 +19,6 @@ export const useUnicornGame = (
   const startTimeRef = useRef(0);
   const HINT_COST = 5;
 
-  // Timer Effect
   useEffect(() => {
     let interval = null;
     if (gameState === "playing") {
@@ -32,7 +31,6 @@ export const useUnicornGame = (
     return () => clearInterval(interval);
   }, [gameState]);
 
-  // Viewport Auto-Pan Effect
   useEffect(() => {
     if (gameState === "playing" && nodePositions[currentIndex]) {
       const pos = nodePositions[currentIndex];
@@ -55,7 +53,6 @@ export const useUnicornGame = (
     setVisitedIndices([0]);
     setShowHint(false);
 
-    // Reset Viewport
     viewport.setZoom(1);
     viewport.setPan({ x: 0, y: window.innerHeight * 0.3 });
 
@@ -69,12 +66,10 @@ export const useUnicornGame = (
     const dist = idx - currentIndex;
 
     if (dist === power) {
-      // Successful Jump
       setCurrentIndex(idx);
       setVisitedIndices((p) => [...p, idx]);
       setShowHint(false);
 
-      // Check Victory
       if (idx === levelData.length) {
         const finalTime = elapsedTime / 1000;
         onSaveProgress(level, finalTime);
@@ -82,7 +77,6 @@ export const useUnicornGame = (
         setTimeout(() => setGameState("levelComplete"), 1000);
       }
     } else {
-      // Fail
       setGameState("failed");
     }
   };

@@ -3,7 +3,14 @@ import { Timer, X } from "lucide-react";
 import VictoryModal from "../../components/shared/victoryModal";
 import { Coin } from "../../components/assets/gameAssets";
 
-const CoinCountGame = ({ onExit, lastCompletedLevel = 0, onSaveProgress }) => {
+const CoinCountGame = ({
+  onExit,
+  lastCompletedLevel = 0,
+  onSaveProgress,
+  calcCoins,
+  coins,
+  onSpendCoins,
+}) => {
   const [gameState, setGameState] = useState("playing"); // Start playing immediately
   const [level, setLevel] = useState(1);
   const [target, setTarget] = useState(0);
@@ -156,10 +163,13 @@ const CoinCountGame = ({ onExit, lastCompletedLevel = 0, onSaveProgress }) => {
           state={gameState}
           failReason={gameState === "failed" ? "Wrong jump!" : ""}
           time={formatTime(elapsedTime)}
+          coinsEarned={
+            gameState === "levelComplete" && calcCoins ? calcCoins(level) : 0
+          }
           onAction={
             gameState === "failed"
-              ? () => launchLevel(level) // Retry same level
-              : () => launchLevel(level + 1) // Move to next level
+              ? () => launchLevel(level)
+              : () => launchLevel(level + 1)
           }
           isNext={gameState === "levelComplete"}
         />

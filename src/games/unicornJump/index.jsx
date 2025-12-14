@@ -77,7 +77,6 @@ const UnicornJumpGame = ({
       }}
       onWheel={(e) => viewport.applyZoom(e.deltaY * -0.001)}
     >
-      {/* --- GLOBAL HEADER --- */}
       <div className="absolute top-0 left-0 w-full z-30 pointer-events-none">
         <div className="pointer-events-auto">
           <GlobalHeader
@@ -88,8 +87,6 @@ const UnicornJumpGame = ({
           />
         </div>
       </div>
-
-      {/* --- FLOATING GAME HUD --- */}
       <GameHUD
         level={level}
         elapsedTime={elapsedTime}
@@ -100,8 +97,6 @@ const UnicornJumpGame = ({
         visitedIndices={visitedIndices}
         hintCost={HINT_COST}
       />
-
-      {/* --- ZOOM CONTROLS --- */}
       <div className="absolute bottom-6 right-6 z-30 flex flex-col gap-2 pointer-events-auto">
         <button
           onClick={() => viewport.applyZoom(0.1)}
@@ -117,7 +112,6 @@ const UnicornJumpGame = ({
         </button>
       </div>
 
-      {/* --- GAME WORLD --- */}
       <GameWorld
         viewport={viewport}
         nodePositions={nodePositions}
@@ -129,7 +123,6 @@ const UnicornJumpGame = ({
         level={level}
       />
 
-      {/* --- VICTORY/FAILURE MODAL --- */}
       {(gameState === "levelComplete" || gameState === "failed") && (
         <VictoryModal
           state={gameState}

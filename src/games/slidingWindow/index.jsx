@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Timer, X, ZoomIn, ZoomOut, GripVertical } from "lucide-react";
 import { useGameViewport } from "../../hooks/gameViewport";
-import { getBestTimes } from "../../utils/storage";
 import VictoryModal from "../../components/shared/victoryModal";
 import {
   BracketLeftSVG,
@@ -12,6 +11,9 @@ const SlidingWindowGame = ({
   onExit,
   lastCompletedLevel = 0,
   onSaveProgress,
+  calcCoins,
+  coins,
+  onSpendCoins,
 }) => {
   const viewport = useGameViewport(1);
   const [gameState, setGameState] = useState("level-select");
@@ -22,7 +24,6 @@ const SlidingWindowGame = ({
   const [bracketPos, setBracketPos] = useState(0);
   const bracketPosRef = useRef(0);
   const [elapsedTime, setElapsedTime] = useState(0);
-  const [failMessage, setFailMessage] = useState("");
   const isDraggingBracket = useRef(false);
   const dragStartBracketX = useRef(0);
   const bracketStartRef = useRef(0);
@@ -196,29 +197,6 @@ const SlidingWindowGame = ({
             <X size={20} />
           </button>
         </div>
-        {/* <div className="bg-slate-900/80 backdrop-blur px-6 py-3 rounded-2xl border border-slate-700 shadow-xl pointer-events-auto">
-          <h2 className="text-cyan-400 text-xs font-bold tracking-widest uppercase mb-1">
-            SLIDING WINDOW
-          </h2>
-          <div className="text-xl font-bold flex items-center gap-4">
-            {gameState === "setup" ? (
-              <span>
-                Select{" "}
-                <span className="text-emerald-400 text-2xl">{windowSize}</span>{" "}
-                nodes
-              </span>
-            ) : (
-              <span className="text-emerald-400 animate-pulse">FIND MAX</span>
-            )}
-            {(gameState === "setup" ||
-              gameState === "playing" ||
-              gameState === "scoring") && (
-              <div className="flex items-center gap-2 text-slate-400 font-mono border-l border-slate-700 pl-4 ml-2">
-                <Timer size={16} /> {formatTime(elapsedTime)}s
-              </div>
-            )}
-          </div>
-        </div> */}
         <button
           onClick={onExit}
           className="pointer-events-auto p-3 bg-slate-800 rounded-full hover:bg-rose-500 transition-colors"
@@ -318,12 +296,15 @@ const SlidingWindowGame = ({
       {(gameState === "levelComplete" || gameState === "failed") && (
         <VictoryModal
           state={gameState}
-          failReason={failMessage}
+          failReason={gameState === "failed" ? "Wrong jump!" : ""}
           time={formatTime(elapsedTime)}
+          coinsEarned={
+            gameState === "levelComplete" && calcCoins ? calcCoins(level) : 0
+          }
           onAction={
             gameState === "failed"
-              ? () => launchLevel(level) // Retry same level
-              : () => launchLevel(level + 1) // Move to next level
+              ? () => launchLevel(level)
+              : () => launchLevel(level + 1)
           }
           isNext={gameState === "levelComplete"}
         />

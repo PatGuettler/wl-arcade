@@ -7,6 +7,9 @@ const CashCounterGame = ({
   onExit,
   lastCompletedLevel = 0,
   onSaveProgress,
+  calcCoins,
+  coins,
+  onSpendCoins,
 }) => {
   const [gameState, setGameState] = useState("playing"); // Start playing immediately
   const [level, setLevel] = useState(1);
@@ -154,10 +157,13 @@ const CashCounterGame = ({
           state={gameState}
           failReason={gameState === "failed" ? "Wrong jump!" : ""}
           time={formatTime(elapsedTime)}
+          coinsEarned={
+            gameState === "levelComplete" && calcCoins ? calcCoins(level) : 0
+          }
           onAction={
             gameState === "failed"
-              ? () => launchLevel(level) // Retry same level
-              : () => launchLevel(level + 1) // Move to next level
+              ? () => launchLevel(level)
+              : () => launchLevel(level + 1)
           }
           isNext={gameState === "levelComplete"}
         />
