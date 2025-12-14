@@ -3,7 +3,7 @@ import { ZoomIn, ZoomOut } from "lucide-react";
 import { useGameViewport } from "../../hooks/gameViewport";
 import VictoryModal from "../../components/shared/victoryModal";
 import GlobalHeader from "../../components/shared/globalHeader";
-import GameHUD from "./gameHUD";
+import GameHUD from "../../components/shared/gameHUD";
 import GameWorld from "./gameWorld";
 import { useUnicornGame } from "./useUnicornGame";
 
@@ -30,7 +30,7 @@ const UnicornJumpGame = ({
     launchLevel,
     handleNodeClick,
     buyHint,
-    HINT_COST,
+    hintCost,
   } = useUnicornGame(
     lastCompletedLevel,
     onSaveProgress,
@@ -38,27 +38,20 @@ const UnicornJumpGame = ({
     viewport
   );
 
-  // Helper formatting for modal
   const formatTime = (ms) => (ms / 1000).toFixed(2);
-
   const handleDown = (e) => viewport.startDrag(e);
   const handleMove = (e) => viewport.doDrag(e);
   const handleUp = () => viewport.endDrag();
 
-  // Initial Level Launch
   useEffect(() => {
     let startLevel = lastCompletedLevel;
-    if (startLevel === 0) {
-      startLevel = startLevel + 1;
-    }
+    if (startLevel === 0) startLevel = 1;
     launchLevel(startLevel);
   }, []);
 
   return (
     <div
-      className={`w-full h-screen bg-gradient-to-b from-slate-950 via-purple-950 to-slate-950 overflow-hidden text-white select-none relative ${
-        viewport.isDragging ? "cursor-grabbing" : "cursor-grab"
-      }`}
+      className="w-full h-screen bg-gradient-to-b from-slate-950 via-purple-950 to-slate-950 overflow-hidden text-white select-none relative"
       onMouseDown={handleDown}
       onMouseMove={handleMove}
       onMouseUp={handleUp}
@@ -76,6 +69,7 @@ const UnicornJumpGame = ({
         handleUp(e);
       }}
       onWheel={(e) => viewport.applyZoom(e.deltaY * -0.001)}
+      style={{ cursor: viewport.isDragging ? "grabbing" : "grab" }}
     >
       <div className="absolute top-0 left-0 w-full z-30 pointer-events-none">
         <div className="pointer-events-auto">
@@ -87,16 +81,19 @@ const UnicornJumpGame = ({
           />
         </div>
       </div>
+
       <GameHUD
+        title="Unicorn Jump"
         level={level}
         elapsedTime={elapsedTime}
         gameState={gameState}
         coins={coins}
         onBuyHint={buyHint}
         showHint={showHint}
-        visitedIndices={visitedIndices}
-        hintCost={HINT_COST}
+        hintCost={hintCost}
+        isFreeHint={level === 1 && visitedIndices.length <= 2}
       />
+
       <div className="absolute bottom-6 right-6 z-30 flex flex-col gap-2 pointer-events-auto">
         <button
           onClick={() => viewport.applyZoom(0.1)}

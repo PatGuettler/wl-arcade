@@ -312,7 +312,6 @@ export default function App() {
     );
 
   if (currentView === "game") {
-    // ... existing game logic ...
     if (activeGame === "unicorn")
       return (
         <UnicornJumpGame
@@ -336,6 +335,8 @@ export default function App() {
             handleSaveProgress("sliding", lvl, time)
           }
           calcCoins={calculateCoins}
+          coins={userData.coins}
+          onSpendCoins={handleSpendCoins}
           onHome={goHome}
         />
       );
@@ -346,6 +347,8 @@ export default function App() {
           lastCompletedLevel={userData.coin.maxLevel + 1}
           onSaveProgress={(lvl, time) => handleSaveProgress("coin", lvl, time)}
           calcCoins={calculateCoins}
+          coins={userData.coins}
+          onSpendCoins={handleSpendCoins}
           onHome={goHome}
         />
       );
@@ -356,6 +359,8 @@ export default function App() {
           lastCompletedLevel={userData.cash.maxLevel + 1}
           onSaveProgress={(lvl, time) => handleSaveProgress("cash", lvl, time)}
           calcCoins={calculateCoins}
+          coins={userData.coins}
+          onSpendCoins={handleSpendCoins}
           onHome={goHome}
         />
       );

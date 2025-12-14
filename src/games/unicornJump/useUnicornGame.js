@@ -1,5 +1,6 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { generateLevelData, generateNodePositions } from "./levelUtils";
+import { useGameSystem } from "../../components/shared/useGameSystem";
 
 export const useUnicornGame = (
   initialLevel,
@@ -7,30 +8,31 @@ export const useUnicornGame = (
   onSpendCoins,
   viewport
 ) => {
-  const [gameState, setGameState] = useState("playing");
-  const [level, setLevel] = useState(1);
+  const {
+    gameState,
+    setGameState, // Needed for local 'failed' override if logic differs
+    level,
+    elapsedTime,
+    showHint,
+    movesMade,
+    startGame,
+    registerMove,
+    buyHint,
+    completeLevel,
+    failLevel,
+    hintCost,
+  } = useGameSystem({
+    initialLevel,
+    onSaveProgress,
+    onSpendCoins,
+  });
+
   const [levelData, setLevelData] = useState([]);
   const [visitedIndices, setVisitedIndices] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [elapsedTime, setElapsedTime] = useState(0);
   const [nodePositions, setNodePositions] = useState([]);
-  const [showHint, setShowHint] = useState(false);
 
-  const startTimeRef = useRef(0);
-  const HINT_COST = 5;
-
-  useEffect(() => {
-    let interval = null;
-    if (gameState === "playing") {
-      startTimeRef.current = Date.now();
-      interval = setInterval(
-        () => setElapsedTime(Date.now() - startTimeRef.current),
-        50
-      );
-    }
-    return () => clearInterval(interval);
-  }, [gameState]);
-
+  // Sync Camera
   useEffect(() => {
     if (gameState === "playing" && nodePositions[currentIndex]) {
       const pos = nodePositions[currentIndex];
@@ -43,7 +45,6 @@ export const useUnicornGame = (
   }, [currentIndex, gameState, nodePositions, viewport.zoom, viewport.setPan]);
 
   const launchLevel = (lvl) => {
-    setLevel(lvl);
     const arr = generateLevelData(lvl);
     const positions = generateNodePositions(arr.length);
 
@@ -51,13 +52,11 @@ export const useUnicornGame = (
     setNodePositions(positions);
     setCurrentIndex(0);
     setVisitedIndices([0]);
-    setShowHint(false);
 
     viewport.setZoom(1);
     viewport.setPan({ x: 0, y: window.innerHeight * 0.3 });
 
-    setElapsedTime(0);
-    setGameState("playing");
+    startGame(lvl);
   };
 
   const handleNodeClick = (idx) => {
@@ -68,23 +67,13 @@ export const useUnicornGame = (
     if (dist === power) {
       setCurrentIndex(idx);
       setVisitedIndices((p) => [...p, idx]);
-      setShowHint(false);
+      registerMove(true);
 
       if (idx === levelData.length) {
-        const finalTime = elapsedTime / 1000;
-        onSaveProgress(level, finalTime);
-        setGameState("scoring");
-        setTimeout(() => setGameState("levelComplete"), 1000);
+        completeLevel();
       }
     } else {
-      setGameState("failed");
-    }
-  };
-
-  const buyHint = () => {
-    if (showHint) return;
-    if (onSpendCoins(HINT_COST)) {
-      setShowHint(true);
+      failLevel();
     }
   };
 
@@ -97,9 +86,10 @@ export const useUnicornGame = (
     elapsedTime,
     nodePositions,
     showHint,
+    movesMade,
     launchLevel,
     handleNodeClick,
     buyHint,
-    HINT_COST,
+    hintCost,
   };
 };

@@ -1,7 +1,10 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Timer, X, ZoomIn, ZoomOut, GripVertical } from "lucide-react";
+import { ZoomIn, ZoomOut, GripVertical } from "lucide-react";
 import { useGameViewport } from "../../hooks/gameViewport";
 import VictoryModal from "../../components/shared/victoryModal";
+import GlobalHeader from "../../components/shared/globalHeader";
+import GameHUD from "../../components/shared/gameHUD";
+import { useGameSystem } from "../../components/shared/useGameSystem";
 import {
   BracketLeftSVG,
   BracketRightSVG,
@@ -14,46 +17,48 @@ const SlidingWindowGame = ({
   calcCoins,
   coins,
   onSpendCoins,
+  onHome,
 }) => {
   const viewport = useGameViewport(1);
-  const [gameState, setGameState] = useState("level-select");
-  const [level, setLevel] = useState(1);
+  const {
+    gameState,
+    setGameState,
+    level,
+    elapsedTime,
+    showHint,
+    movesMade,
+    startGame,
+    registerMove,
+    buyHint,
+    completeLevel,
+    failLevel,
+    hintCost,
+  } = useGameSystem({
+    initialLevel: lastCompletedLevel,
+    onSaveProgress,
+    onSpendCoins,
+  });
+
   const [levelData, setLevelData] = useState([]);
   const [windowSize, setWindowSize] = useState(3);
   const [windowPos, setWindowPos] = useState(0);
   const [bracketPos, setBracketPos] = useState(0);
   const bracketPosRef = useRef(0);
-  const [elapsedTime, setElapsedTime] = useState(0);
   const isDraggingBracket = useRef(false);
   const dragStartBracketX = useRef(0);
   const bracketStartRef = useRef(0);
-  const startTimeRef = useRef(0);
 
   const NODE_WIDTH = 50;
   const NODE_GAP = 16;
   const FULL_W = 96;
   const PADDING = 40;
 
-  const formatTime = (ms) => (ms / 1000).toFixed(2); //util
+  const formatTime = (ms) => (ms / 1000).toFixed(2);
 
   useEffect(() => {
-    let interval = null;
-    if (gameState === "playing") {
-      startTimeRef.current = Date.now();
-      interval = setInterval(
-        () => setElapsedTime(Date.now() - startTimeRef.current),
-        50
-      );
-    }
-    return () => clearInterval(interval);
-  }, [gameState]);
-
-  useEffect(() => {
-    if (lastCompletedLevel === 0) {
-      lastCompletedLevel = lastCompletedLevel + 1;
-    }
-
-    launchLevel(lastCompletedLevel);
+    let startLvl = lastCompletedLevel;
+    if (startLvl === 0) startLvl = 1;
+    launchLevel(startLvl);
   }, []);
 
   const launchLevel = (lvl) => {
@@ -64,67 +69,74 @@ const SlidingWindowGame = ({
       { length: len },
       () => Math.floor(Math.random() * (max - min + 1)) + min
     );
-    setLevel(lvl);
+
     setLevelData(data);
     setWindowSize(Math.floor(Math.random() * 3) + 3);
     setWindowPos(0);
     setBracketPos(0);
-    setElapsedTime(0);
+    bracketPosRef.current = 0;
+
     viewport.setZoom(1);
     viewport.setPan({ x: 0, y: 0 });
-    bracketPosRef.current = 0;
+
     setGameState("setup");
+    startGame(lvl);
+  };
+
+  const startPlaying = () => {
+    setGameState("playing");
+  };
+
+  const getCurrentWindowIndices = () => {
+    return Array.from({ length: windowSize }, (_, i) => windowPos + i);
+  };
+
+  const getMaxIndexInWindow = () => {
+    const indices = getCurrentWindowIndices();
+    let maxVal = -Infinity;
+    let maxIdx = -1;
+    indices.forEach((i) => {
+      if (levelData[i] > maxVal) {
+        maxVal = levelData[i];
+        maxIdx = i;
+      }
+    });
+    return maxIdx;
   };
 
   const handleNodeClick = (idx) => {
     if (gameState !== "playing") return;
-    const winIndices = Array.from(
-      { length: windowSize },
-      (_, i) => windowPos + i
-    );
-    if (!winIndices.includes(idx)) return fail("Clicked outside window!");
+    const winIndices = getCurrentWindowIndices();
+    if (!winIndices.includes(idx)) return failLevel("Clicked outside window!");
 
-    const maxVal = Math.max(...winIndices.map((i) => levelData[i]));
-    if (levelData[idx] === maxVal) {
+    const maxIdx = getMaxIndexInWindow();
+
+    if (idx === maxIdx) {
+      registerMove(true);
       if (windowPos + windowSize >= levelData.length) {
-        onSaveProgress(level, elapsedTime / 1000);
-        setGameState("scoring");
-        setTimeout(() => setGameState("levelComplete"), 1000);
+        completeLevel();
       } else {
         setWindowPos((p) => p + 1);
-        viewport.centerOn(
-          PADDING + (windowPos + 1) * FULL_W + (FULL_W * windowSize) / 2
-        );
       }
     } else {
-      fail("Not the max value!");
+      failLevel("Not the max value!");
     }
-  };
-
-  const fail = (msg) => {
-    setFailMessage(msg);
-    setGameState("scoring");
-    setTimeout(() => setGameState("failed"), 1000);
   };
 
   const handleMove = (e) => {
     if (viewport.isPinching) return;
     const cx = e.touches ? e.touches[0].clientX : e.clientX;
     if (isDraggingBracket.current) {
-      e.preventDefault(); // Stop scroll
+      e.preventDefault();
       const diff = Math.round(
         (cx - dragStartBracketX.current) / (FULL_W * viewport.zoom)
       );
-      setBracketPos(
-        Math.max(
-          0,
-          Math.min(levelData.length - 1, bracketStartRef.current + diff)
-        )
-      );
-      bracketPosRef.current = Math.max(
+      const newPos = Math.max(
         0,
         Math.min(levelData.length - 1, bracketStartRef.current + diff)
       );
+      setBracketPos(newPos);
+      bracketPosRef.current = newPos;
     } else {
       viewport.doDrag(e);
     }
@@ -133,8 +145,13 @@ const SlidingWindowGame = ({
   const handleUp = () => {
     if (isDraggingBracket.current) {
       isDraggingBracket.current = false;
-      if (bracketPosRef.current + 1 === windowSize) setGameState("playing");
-      else fail(`Selected ${bracketPosRef.current + 1}, needed ${windowSize}`);
+      if (bracketPosRef.current + 1 === windowSize) {
+        startPlaying();
+      } else {
+        failLevel(
+          `Selected ${bracketPosRef.current + 1}, needed ${windowSize}`
+        );
+      }
     }
     viewport.endDrag();
   };
@@ -148,9 +165,7 @@ const SlidingWindowGame = ({
 
   return (
     <div
-      className={`w-full h-screen bg-slate-950 overflow-hidden text-white select-none ${
-        viewport.isDragging ? "cursor-grabbing" : "cursor-grab"
-      }`}
+      className="w-full h-screen bg-gradient-to-b from-slate-950 via-purple-950 to-slate-950 overflow-hidden text-white select-none relative"
       onMouseDown={viewport.startDrag}
       onMouseMove={handleMove}
       onMouseUp={handleUp}
@@ -168,66 +183,56 @@ const SlidingWindowGame = ({
         handleUp(e);
       }}
       onWheel={(e) => viewport.applyZoom(e.deltaY * -0.001)}
+      style={{ cursor: viewport.isDragging ? "grabbing" : "grab" }}
     >
-      <div className="absolute top-0 left-0 w-full p-6 z-20 flex justify-between pointer-events-none">
-        {/* Header @TODO: Make this a util*/}
-        <div className="absolute top-0 left-0 w-full p-6 z-20 flex justify-between pointer-events-none">
-          <div className="bg-slate-900/80 backdrop-blur px-6 py-3 rounded-2xl border border-slate-700 shadow-xl pointer-events-auto">
-            <div className="text-cyan-400 text-xs font-bold tracking-widest mb-1">
-              SLIDING WINDOW
-            </div>
-            <div className="text-xl font-bold flex items-center gap-4">
-              <span>
-                Select{" "}
-                <span className="text-emerald-400 text-2xl">{windowSize}</span>{" "}
-                nodes
-              </span>
-            </div>
-            <div className="text-xl font-bold flex items-center gap-4">
-              <span>Lvl {level}</span>
-              <div className="flex items-center gap-2 text-slate-400 font-mono border-l border-slate-700 pl-4 ml-2">
-                <Timer size={16} /> {formatTime(elapsedTime)}s
-              </div>
-            </div>
-          </div>
-          <button
-            onClick={onExit}
-            className="pointer-events-auto p-3 bg-slate-800 rounded-full hover:bg-rose-500 transition-colors"
-          >
-            <X size={20} />
-          </button>
+      <div className="absolute top-0 left-0 w-full z-30 pointer-events-none">
+        <div className="pointer-events-auto">
+          <GlobalHeader
+            coins={coins}
+            onBack={onExit}
+            isSubScreen={true}
+            onHome={onHome}
+          />
         </div>
-        <button
-          onClick={onExit}
-          className="pointer-events-auto p-3 bg-slate-800 rounded-full hover:bg-rose-500 transition-colors"
-        >
-          <X size={20} />
-        </button>
       </div>
+
+      <GameHUD
+        title={
+          gameState === "setup" ? `SELECT ${windowSize}` : "Sliding Window"
+        }
+        level={level}
+        elapsedTime={elapsedTime}
+        gameState={gameState === "setup" ? "playing" : gameState}
+        coins={coins}
+        onBuyHint={buyHint}
+        showHint={showHint}
+        hintCost={hintCost}
+        isFreeHint={level === 1 && movesMade < 2}
+      />
+
       <div className="absolute bottom-6 right-6 z-30 flex flex-col gap-2 pointer-events-auto">
         <button
           onClick={() => viewport.applyZoom(0.2)}
-          className="p-3 bg-slate-800 rounded-full text-cyan-400 border border-slate-600"
+          className="p-3 bg-slate-800 rounded-full text-cyan-400 border border-slate-600 hover:bg-slate-700"
         >
           <ZoomIn />
         </button>
         <button
           onClick={() => viewport.applyZoom(-0.2)}
-          className="p-3 bg-slate-800 rounded-full text-slate-400 border border-slate-600"
+          className="p-3 bg-slate-800 rounded-full text-slate-400 border border-slate-600 hover:bg-slate-700"
         >
           <ZoomOut />
         </button>
       </div>
 
       <div
-        className="flex-1 flex items-center relative will-change-transform origin-left"
+        className="flex-1 flex items-center relative will-change-transform origin-left h-full"
         style={{
           transform: `translate(${viewport.pan.x}px, ${viewport.pan.y}px) scale(${viewport.zoom})`,
           transition:
             viewport.isDragging || isDraggingBracket.current
               ? "none"
               : "transform 0.3s ease-out",
-          height: "100%",
         }}
       >
         <div
@@ -273,14 +278,21 @@ const SlidingWindowGame = ({
           )}
           {levelData.map((val, idx) => {
             let bg = "bg-slate-900 border-slate-700 text-slate-500";
-            if (gameState === "setup" && idx <= bracketPos)
+
+            const isMax = idx === getMaxIndexInWindow();
+            const isInWindow = idx >= windowPos && idx < windowPos + windowSize;
+
+            if (gameState === "playing" && isInWindow) {
+              if (showHint && isMax) {
+                bg =
+                  "bg-yellow-500/20 border-yellow-400 text-white animate-pulse shadow-[0_0_20px_rgba(234,179,8,0.5)]";
+              } else {
+                bg = "bg-slate-800 border-slate-500 text-white";
+              }
+            } else if (gameState === "setup" && idx <= bracketPos) {
               bg = "bg-cyan-900/50 border-cyan-500 text-white";
-            else if (
-              gameState === "playing" &&
-              idx >= windowPos &&
-              idx < windowPos + windowSize
-            )
-              bg = "bg-slate-800 border-slate-500 text-white";
+            }
+
             return (
               <div
                 key={idx}
@@ -296,7 +308,7 @@ const SlidingWindowGame = ({
       {(gameState === "levelComplete" || gameState === "failed") && (
         <VictoryModal
           state={gameState}
-          failReason={gameState === "failed" ? "Wrong jump!" : ""}
+          failReason={gameState === "failed" ? "Wrong node!" : ""}
           time={formatTime(elapsedTime)}
           coinsEarned={
             gameState === "levelComplete" && calcCoins ? calcCoins(level) : 0

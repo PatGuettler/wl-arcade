@@ -5,6 +5,17 @@ import { UnicornSVG } from "../assets/gameAssets";
 import GlobalHeader from "../shared/globalHeader";
 import alleyMap from "./unicornAlleyMap.jpeg";
 
+// CONFIGURATION: Adjust these percentages to match the houses in your image!
+// format: { top: '10%', left: '20%' }
+const HOUSE_POSITIONS = [
+  { top: "75%", left: "60%" }, // Sparkle
+  { top: "82%", left: "80%" }, // Rainbow Dash
+  { top: "82%", left: "20%" }, // Stardust
+  { top: "58%", left: "55%" }, // Nimbus
+  { top: "72%", left: "30%" }, // Dreamer
+  { top: "85%", left: "50%" }, // Mystic
+];
+
 const UnicornAlleyView = ({ userData, onEnterRoom, onBack, onHome }) => {
   const handleHouseClick = (unicornId) => {
     if (userData.ownedUnicorns.includes(unicornId)) {
@@ -34,8 +45,10 @@ const UnicornAlleyView = ({ userData, onEnterRoom, onBack, onHome }) => {
 
           {/* Overlay Layer - Matches the exact size of the rendered image */}
           <div className="absolute inset-0">
-            {UNICORNS.map((u) => {
+            {UNICORNS.map((u, index) => {
               const isOwned = userData.ownedUnicorns.includes(u.id);
+              // Fallback to the last position if we run out of configured spots
+              const pos = HOUSE_POSITIONS[index] || { top: "50%", left: "50%" };
 
               return (
                 <div
