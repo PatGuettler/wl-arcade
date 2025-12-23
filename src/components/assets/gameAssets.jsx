@@ -10,39 +10,17 @@ import twentyD from "./twentyDollar.jpg";
 import fiftyD from "./fiftyDollar1.png";
 import hundoD from "./hundoDollar.png";
 
-export const UnicornSVG = () => (
-  <svg
-    viewBox="0 0 100 100"
-    className="w-full h-full drop-shadow-lg"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <path
-      d="M20 65 L20 85 M40 65 L40 85 M60 65 L60 85 M80 65 L80 85"
-      stroke="#f472b6"
-      strokeWidth="4"
+export const UnicornAvatar = ({ image, className = "" }) => {
+  if (!image) return null;
+
+  return (
+    <img
+      src={image}
+      alt="Unicorn"
+      className={`object-contain drop-shadow-xl ${className}`}
     />
-    <path
-      d="M20 65 Q 20 40 40 40 L 70 40 Q 90 40 90 60 L 90 65 L 20 65 Z"
-      fill="#fff"
-      stroke="#f472b6"
-      strokeWidth="3"
-    />
-    <path
-      d="M70 40 L 70 25 Q 70 10 90 15 L 95 25 Q 90 40 70 40"
-      fill="#fff"
-      stroke="#f472b6"
-      strokeWidth="3"
-    />
-    <path d="M85 15 L 95 0 L 92 18" fill="#facc15" stroke="#eab308" />
-    <path d="M20 45 Q 0 45 5 70" stroke="#a855f7" strokeWidth="4" />
-    <path d="M70 25 Q 60 25 65 45" stroke="#3b82f6" strokeWidth="4" />
-    <circle cx="85" cy="25" r="2" fill="#000" />
-  </svg>
-);
+  );
+};
 
 export const COIN_ASSETS = {
   penny: pennyPng,

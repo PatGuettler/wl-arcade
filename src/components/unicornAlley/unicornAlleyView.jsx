@@ -1,103 +1,88 @@
-import React, { useState } from "react";
+import React from "react";
 import { Lock } from "lucide-react";
 import { UNICORNS } from "../../utils/storage";
-import { UnicornSVG } from "../assets/gameAssets";
+import { UnicornAvatar } from "../assets/gameAssets";
 import GlobalHeader from "../shared/globalHeader";
-import alleyMap from "./unicornAlleyMap.jpeg";
-
-// CONFIGURATION: Adjust these percentages to match the houses in your image!
-// format: { top: '10%', left: '20%' }
-const HOUSE_POSITIONS = [
-  { top: "75%", left: "60%" }, // Sparkle
-  { top: "82%", left: "80%" }, // Rainbow Dash
-  { top: "82%", left: "20%" }, // Stardust
-  { top: "58%", left: "55%" }, // Nimbus
-  { top: "72%", left: "30%" }, // Dreamer
-  { top: "85%", left: "50%" }, // Mystic
-];
 
 const UnicornAlleyView = ({ userData, onEnterRoom, onBack, onHome }) => {
-  const handleHouseClick = (unicornId) => {
-    if (userData.ownedUnicorns.includes(unicornId)) {
-      onEnterRoom(unicornId);
-    }
-  };
-
   return (
-    <div className="w-full h-screen bg-slate-950 flex flex-col relative overflow-hidden">
+    <div className="w-full h-screen bg-slate-950 flex flex-col">
       <GlobalHeader
-        coins={userData.coins}
+        coins={userData?.coins || 0}
         onBack={onBack}
-        onHome={onHome}
         isSubScreen={true}
         title="Unicorn Alley"
+        onHome={onHome}
       />
 
-      {/* Main Map Container - Ensures full visibility */}
-      <div className="flex-1 flex items-center justify-center p-4 overflow-hidden w-full h-full">
-        {/* Relative wrapper that shrinks to fit the image dimensions */}
-        <div className="relative shadow-2xl rounded-2xl border border-slate-800 bg-slate-900">
-          <img
-            src={alleyMap}
-            alt="Unicorn Alley Map"
-            className="max-w-full max-h-[calc(100vh-8rem)] w-auto h-auto block rounded-2xl object-contain pointer-events-none select-none"
-          />
+      <div className="flex-1 overflow-y-auto p-6">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-8">
+            <h2 className="text-3xl font-black text-white mb-2">
+              Your Unicorn Collection
+            </h2>
+            <p className="text-slate-400">
+              Visit each unicorn's room to decorate and personalize!
+            </p>
+          </div>
 
-          {/* Overlay Layer - Matches the exact size of the rendered image */}
-          <div className="absolute inset-0">
-            {UNICORNS.map((u, index) => {
-              const isOwned = userData.ownedUnicorns.includes(u.id);
-              // Fallback to the last position if we run out of configured spots
-              const pos = HOUSE_POSITIONS[index] || { top: "50%", left: "50%" };
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+            {UNICORNS.map((unicorn) => {
+              const isOwned = userData?.ownedUnicorns?.includes(unicorn.id);
 
               return (
                 <div
-                  key={u.id}
-                  onClick={() => handleHouseClick(u.id)}
-                  style={{ top: pos.top, left: pos.left }}
-                  className="absolute w-24 h-24 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center justify-center cursor-pointer group z-10"
+                  key={unicorn.id}
+                  onClick={() => isOwned && onEnterRoom(unicorn.id)}
+                  className={`
+                    relative bg-slate-900 border-2 rounded-3xl p-6 transition-all
+                    ${
+                      isOwned
+                        ? "border-slate-700 hover:border-cyan-500 hover:shadow-[0_0_30px_rgba(6,182,212,0.2)] cursor-pointer group"
+                        : "border-slate-800 opacity-60"
+                    }
+                  `}
                 >
+                  {!isOwned && (
+                    <div className="absolute inset-0 bg-slate-950/50 backdrop-blur-sm rounded-3xl flex items-center justify-center z-10">
+                      <div className="text-center">
+                        <Lock
+                          size={32}
+                          className="text-slate-600 mx-auto mb-2"
+                        />
+                        <p className="text-slate-500 text-sm font-bold">
+                          Not Owned
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
                   <div className="relative transition-transform duration-300 active:scale-95 group-hover:scale-110">
-                    {/* Unified Avatar Display with Conditional Styling */}
                     <div
                       className={`flex flex-col items-center transition-all duration-300 ${
                         isOwned ? "" : "grayscale opacity-70"
                       }`}
                     >
-                      {/* Name Tag */}
-                      <div
-                        className={`
-                        mb-1 px-2 py-0.5 rounded-full backdrop-blur border text-[10px] font-bold uppercase tracking-wider shadow-lg whitespace-nowrap
-                        ${
-                          isOwned
-                            ? `bg-slate-900/80 border-white/20 ${u.accent}`
-                            : "bg-slate-900/90 border-slate-700 text-slate-500"
-                        }
-                      `}
-                      >
-                        {u.name}
+                      <div className="w-32 h-32 mb-4">
+                        <UnicornAvatar
+                          image={unicorn.image}
+                          className="w-full h-full"
+                        />
                       </div>
 
-                      {/* Avatar */}
-                      <div
-                        className={`w-16 h-16 filter drop-shadow-2xl ${
-                          isOwned ? "animate-float" : ""
-                        }`}
+                      <h3
+                        className={`text-xl font-bold mb-2 ${unicorn.accent}`}
                       >
-                        <UnicornSVG />
-                      </div>
+                        {unicorn.name}
+                      </h3>
 
-                      {/* Locked Badge Overlay */}
-                      {!isOwned && (
-                        <div className="absolute bottom-6 -right-2 bg-slate-900 p-1.5 rounded-full border border-slate-600 shadow-lg z-20">
-                          <Lock size={12} className="text-slate-400" />
-                        </div>
-                      )}
+                      <p className="text-slate-400 text-sm text-center">
+                        {unicorn.desc}
+                      </p>
 
-                      {/* "Enter" hint on hover (Only for owned) */}
                       {isOwned && (
-                        <div className="absolute -bottom-6 opacity-0 group-hover:opacity-100 transition-opacity bg-white text-slate-900 text-[10px] font-black px-2 py-1 rounded-full whitespace-nowrap shadow-lg z-20">
-                          ENTER HOUSE
+                        <div className="mt-4 px-4 py-2 bg-cyan-500/10 border border-cyan-500/30 rounded-full text-cyan-400 text-xs font-bold">
+                          ENTER ROOM →
                         </div>
                       )}
                     </div>

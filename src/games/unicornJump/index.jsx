@@ -15,6 +15,7 @@ const UnicornJumpGame = ({
   coins,
   onSpendCoins,
   onHome,
+  unicornImage,
 }) => {
   const viewport = useGameViewport(1);
 
@@ -118,6 +119,7 @@ const UnicornJumpGame = ({
         showHint={showHint}
         onNodeClick={handleNodeClick}
         level={level}
+        unicornImage={unicornImage} // <--- Passed to world
       />
 
       {(gameState === "levelComplete" || gameState === "failed") && (
