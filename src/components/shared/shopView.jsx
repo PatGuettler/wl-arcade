@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Lock, Check, ShoppingCart, Armchair, Ghost } from "lucide-react";
 import { UNICORNS, FURNITURE } from "../../utils/storage";
-import { UnicornSVG } from "../assets/gameAssets";
+import { UnicornAvatar } from "../assets/gameAssets";
 import GlobalHeader from "./globalHeader";
 
 const ShopView = ({
@@ -67,7 +67,11 @@ const ShopView = ({
                   }`}
                 >
                   <div className="w-24 h-24 mb-4">
-                    <UnicornSVG />
+                    {/* FIXED: Added the image prop here */}
+                    <UnicornAvatar
+                      image={item.image}
+                      className="w-full h-full"
+                    />
                   </div>
                   <h3 className="font-bold text-white mb-1">{item.name}</h3>
 

@@ -1,6 +1,6 @@
 import React from "react";
 import { CheckCircle } from "lucide-react";
-import { UnicornSVG } from "../../components/assets/gameAssets";
+import { UnicornAvatar } from "../../components/assets/gameAssets";
 import UnicornTutorial from "./unicornTutorial";
 
 const GameWorld = ({
@@ -12,6 +12,7 @@ const GameWorld = ({
   showHint,
   onNodeClick,
   level,
+  unicornImage,
 }) => {
   const shouldShowOverlay =
     (level === 1 && visitedIndices.length <= 2) || showHint;
@@ -126,7 +127,7 @@ const GameWorld = ({
               top: nodePositions[currentIndex].y - 100,
             }}
           >
-            <UnicornSVG />
+            <UnicornAvatar image={unicornImage} className="w-full h-full" />
           </div>
         )}
 

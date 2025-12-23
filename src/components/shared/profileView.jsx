@@ -1,8 +1,9 @@
 import GlobalHeader from "./globalHeader";
 import { User, Armchair } from "lucide-react";
 import { FURNITURE } from "../../utils/storage";
+import { LogOut } from "lucide-react";
 
-const ProfileView = ({ user, data, onBack, onHome }) => {
+const ProfileView = ({ user, data, onBack, onHome, handleLogout }) => {
   return (
     <div className="w-full h-screen bg-slate-950 flex flex-col animate-fade-in">
       <GlobalHeader
@@ -29,6 +30,14 @@ const ProfileView = ({ user, data, onBack, onHome }) => {
               </div>
             </div>
           </div>
+
+          <button
+            onClick={handleLogout}
+            className="w-full py-4 bg-slate-900 border border-slate-800 rounded-2xl text-rose-400 font-bold uppercase tracking-widest hover:bg-slate-800 hover:text-rose-300 transition-all flex items-center justify-center gap-2 mb-4"
+          >
+            <LogOut size={18} />
+            Log Out
+          </button>
 
           {/* Game Stats */}
           <h3 className="text-slate-400 font-bold uppercase text-sm mb-4 pl-2">

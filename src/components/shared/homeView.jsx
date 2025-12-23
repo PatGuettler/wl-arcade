@@ -1,7 +1,7 @@
 import React from "react";
 import { Play, ShoppingBag, Trophy, Warehouse } from "lucide-react";
 import { UNICORNS } from "../../utils/storage";
-import { UnicornSVG } from "../assets/gameAssets";
+import { UnicornAvatar } from "../assets/gameAssets";
 import GlobalHeader from "./globalHeader";
 
 const HomeView = ({
@@ -11,7 +11,6 @@ const HomeView = ({
   onShop,
   onProfile,
   onAlley,
-  handleLogout,
   onHome,
 }) => {
   const currentUnicorn = userData?.equippedUnicorn
@@ -44,7 +43,11 @@ const HomeView = ({
           className="w-64 h-64 mb-12 drop-shadow-2xl animate-float relative group cursor-pointer z-20"
           onClick={onShop}
         >
-          <UnicornSVG />
+          {/* UPDATED: Passing image prop */}
+          <UnicornAvatar
+            image={currentUnicorn?.image}
+            className="w-full h-full"
+          />
         </div>
 
         <div className="w-full px-6 relative z-20 flex flex-col gap-4">
@@ -88,13 +91,6 @@ const HomeView = ({
           </button>
         </div>
       </div>
-
-      <button
-        onClick={handleLogout}
-        className="mb-6 text-slate-600 hover:text-slate-400 text-xs font-bold uppercase tracking-widest z-30 cursor-pointer"
-      >
-        Log Out
-      </button>
     </div>
   );
 };

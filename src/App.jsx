@@ -249,7 +249,6 @@ export default function App() {
         onShop={() => setCurrentView("shop")}
         onProfile={() => setCurrentView("profile")}
         onAlley={() => setCurrentView("alley")}
-        handleLogout={handleLogout}
         onHome={goHome}
       />
     );
@@ -295,6 +294,7 @@ export default function App() {
         data={userData}
         onBack={() => setCurrentView("home")}
         onHome={goHome}
+        handleLogout={handleLogout}
       />
     );
 
@@ -312,6 +312,12 @@ export default function App() {
     );
 
   if (currentView === "game") {
+    // Get current unicorn image to pass to game
+    const equippedId = userData.equippedUnicorn || "sparkle";
+    const currentUnicorn =
+      UNICORNS.find((u) => u.id === equippedId) || UNICORNS[0];
+    const unicornImage = currentUnicorn.image;
+
     if (activeGame === "unicorn")
       return (
         <UnicornJumpGame
@@ -324,6 +330,7 @@ export default function App() {
           coins={userData.coins}
           onSpendCoins={handleSpendCoins}
           onHome={goHome}
+          unicornImage={unicornImage} // <--- PASSING IMAGE HERE
         />
       );
     if (activeGame === "sliding")
@@ -335,9 +342,9 @@ export default function App() {
             handleSaveProgress("sliding", lvl, time)
           }
           calcCoins={calculateCoins}
+          onHome={goHome}
           coins={userData.coins}
           onSpendCoins={handleSpendCoins}
-          onHome={goHome}
         />
       );
     if (activeGame === "coin")
@@ -347,9 +354,9 @@ export default function App() {
           lastCompletedLevel={userData.coin.maxLevel + 1}
           onSaveProgress={(lvl, time) => handleSaveProgress("coin", lvl, time)}
           calcCoins={calculateCoins}
+          onHome={goHome}
           coins={userData.coins}
           onSpendCoins={handleSpendCoins}
-          onHome={goHome}
         />
       );
     if (activeGame === "cash")
@@ -359,9 +366,9 @@ export default function App() {
           lastCompletedLevel={userData.cash.maxLevel + 1}
           onSaveProgress={(lvl, time) => handleSaveProgress("cash", lvl, time)}
           calcCoins={calculateCoins}
+          onHome={goHome}
           coins={userData.coins}
           onSpendCoins={handleSpendCoins}
-          onHome={goHome}
         />
       );
     return <div className="text-white">Game Not Found</div>;
