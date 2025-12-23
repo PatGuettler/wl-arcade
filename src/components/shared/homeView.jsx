@@ -11,7 +11,6 @@ const HomeView = ({
   onShop,
   onProfile,
   onAlley,
-  handleLogout,
   onHome,
 }) => {
   const currentUnicorn = userData?.equippedUnicorn
@@ -92,13 +91,6 @@ const HomeView = ({
           </button>
         </div>
       </div>
-
-      <button
-        onClick={handleLogout}
-        className="mb-6 text-slate-600 hover:text-slate-400 text-xs font-bold uppercase tracking-widest z-30 cursor-pointer"
-      >
-        Log Out
-      </button>
     </div>
   );
 };

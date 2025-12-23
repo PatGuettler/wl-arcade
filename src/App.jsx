@@ -249,7 +249,6 @@ export default function App() {
         onShop={() => setCurrentView("shop")}
         onProfile={() => setCurrentView("profile")}
         onAlley={() => setCurrentView("alley")}
-        handleLogout={handleLogout}
         onHome={goHome}
       />
     );
@@ -295,6 +294,7 @@ export default function App() {
         data={userData}
         onBack={() => setCurrentView("home")}
         onHome={goHome}
+        handleLogout={handleLogout}
       />
     );
 
