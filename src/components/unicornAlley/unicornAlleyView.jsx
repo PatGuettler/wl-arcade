@@ -5,8 +5,6 @@ import { UnicornAvatar } from "../assets/gameAssets";
 import GlobalHeader from "../shared/globalHeader";
 import alleyMap from "./unicornAlleyMap.jpeg";
 
-// CONFIGURATION: Adjust these percentages to match the houses in your image!
-// format: { top: '10%', left: '20%' }
 const HOUSE_POSITIONS = [
   { top: "75%", left: "60%" }, // Sparkle
   { top: "82%", left: "80%" }, // Rainbow Dash
@@ -33,9 +31,7 @@ const UnicornAlleyView = ({ userData, onEnterRoom, onBack, onHome }) => {
         title="Unicorn Alley"
       />
 
-      {/* Main Map Container - Ensures full visibility */}
       <div className="flex-1 flex items-center justify-center p-4 overflow-hidden w-full h-full">
-        {/* Relative wrapper that shrinks to fit the image dimensions */}
         <div className="relative shadow-2xl rounded-2xl border border-slate-800 bg-slate-900">
           <img
             src={alleyMap}
@@ -43,11 +39,9 @@ const UnicornAlleyView = ({ userData, onEnterRoom, onBack, onHome }) => {
             className="max-w-full max-h-[calc(100vh-8rem)] w-auto h-auto block rounded-2xl object-contain pointer-events-none select-none"
           />
 
-          {/* Overlay Layer - Matches the exact size of the rendered image */}
           <div className="absolute inset-0">
             {UNICORNS.map((u, index) => {
               const isOwned = userData.ownedUnicorns.includes(u.id);
-              // Fallback to the last position if we run out of configured spots
               const pos = HOUSE_POSITIONS[index] || { top: "50%", left: "50%" };
 
               return (
@@ -58,7 +52,6 @@ const UnicornAlleyView = ({ userData, onEnterRoom, onBack, onHome }) => {
                   className="absolute w-24 h-24 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center justify-center cursor-pointer group z-10"
                 >
                   <div className="relative transition-transform duration-300 active:scale-95 group-hover:scale-110">
-                    {/* Unified Avatar Display with Conditional Styling */}
                     <div
                       className={`flex flex-col items-center transition-all duration-300 ${
                         isOwned ? "" : "grayscale opacity-70"

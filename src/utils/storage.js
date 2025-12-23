@@ -1,8 +1,9 @@
 import sparkleRoomBg from "../components/assets/sparkleRoom.png";
+import rainbowRoom from "../components/assets/rainbowRoom.png";
 
 import sparkleImg from "../components/assets/sparkle.png";
 // Placeholder
-import rainbowImg from "../components/assets/sparkle.png";
+import rainbowImg from "../components/assets/rainbow.png";
 import starImg from "../components/assets/sparkle.png";
 import cloudImg from "../components/assets/sparkle.png";
 import dreamImg from "../components/assets/sparkle.png";
@@ -23,11 +24,12 @@ export const UNICORNS = [
   },
   {
     id: "rainbow",
-    name: "Rainbow Mist",
+    name: "Rainbow",
     price: 500,
     desc: "Leaves a trail of colors.",
     style: "bg-slate-900",
     image: rainbowImg,
+    bgImage: rainbowRoom,
     accent: "text-cyan-400",
   },
   {

@@ -69,6 +69,7 @@ const RoomView = ({
             <img
               src={unicorn.bgImage}
               alt="Room"
+              style={{ backgroundColor: "#0f172a" }}
               className="max-w-full max-h-[calc(100vh-6rem)] w-auto h-auto block rounded-2xl object-contain pointer-events-none select-none"
             />
           ) : (
