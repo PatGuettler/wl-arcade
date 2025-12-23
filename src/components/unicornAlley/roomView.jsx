@@ -1,5 +1,6 @@
+// components/unicornAlley/roomView.jsx
 import React, { useState, useRef, useEffect } from "react";
-import { Briefcase, X } from "lucide-react";
+import { Briefcase, X, RotateCw, Scaling } from "lucide-react";
 import { UNICORNS, FURNITURE } from "../../utils/storage";
 import GlobalHeader from "../shared/globalHeader";
 
@@ -36,6 +37,8 @@ const RoomView = ({
         itemId,
         x: 50,
         y: 50,
+        rotation: 0,
+        scale: 1,
       });
       setIsBagOpen(false);
     }
@@ -89,7 +92,9 @@ const RoomView = ({
                   def={def}
                   data={item}
                   containerRef={roomContainerRef}
-                  onSave={(x, y) => onPlaceItem(unicornId, { ...item, x, y })}
+                  onSave={(updates) =>
+                    onPlaceItem(unicornId, { ...item, ...updates })
+                  }
                   onRemove={() => onRemoveItem(unicornId, item.instanceId)}
                 />
               );
@@ -160,76 +165,136 @@ const RoomView = ({
 
 const DraggableItem = ({ def, data, onSave, onRemove, containerRef }) => {
   const [pos, setPos] = useState({ x: data.x, y: data.y });
-  const [isDragging, setIsDragging] = useState(false);
-  const startPos = useRef({ x: 0, y: 0 });
+  const [rotation, setRotation] = useState(data.rotation || 0);
+  const [scale, setScale] = useState(data.scale || 1);
+  const [mode, setMode] = useState("none"); // 'none', 'moving', 'resizing'
+
+  const startRef = useRef({ x: 0, y: 0, valX: 0, valY: 0, initialScale: 1 });
 
   useEffect(() => {
     setPos({ x: data.x, y: data.y });
+    setRotation(data.rotation || 0);
+    setScale(data.scale || 1);
   }, [data]);
 
-  const handleStart = (clientX, clientY) => {
-    setIsDragging(true);
-    startPos.current = { x: clientX, y: clientY };
+  const handleStart = (e, interactionMode = "moving") => {
+    e.stopPropagation();
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+    setMode(interactionMode);
+    startRef.current = {
+      x: clientX,
+      y: clientY,
+      valX: pos.x,
+      valY: pos.y,
+      initialScale: scale,
+    };
   };
 
-  const handleMove = (clientX, clientY) => {
-    if (!isDragging || !containerRef.current) return;
+  const handleMove = (e) => {
+    if (mode === "none" || !containerRef.current) return;
+    e.stopPropagation();
+
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
 
     const rect = containerRef.current.getBoundingClientRect();
-    const width = rect.width;
-    const height = rect.height;
 
-    const dX = clientX - startPos.current.x;
-    const dY = clientY - startPos.current.y;
+    if (mode === "moving") {
+      const dX = clientX - startRef.current.x;
+      const dY = clientY - startRef.current.y;
 
-    const dXPercent = (dX / width) * 100;
-    const dYPercent = (dY / height) * 100;
+      const dXPercent = (dX / rect.width) * 100;
+      const dYPercent = (dY / rect.height) * 100;
 
-    setPos((prev) => ({
-      x: Math.max(0, Math.min(90, prev.x + dXPercent)),
-      y: Math.max(0, Math.min(90, prev.y + dYPercent)),
-    }));
-
-    startPos.current = { x: clientX, y: clientY };
+      setPos({
+        x: Math.max(0, Math.min(95, startRef.current.valX + dXPercent)),
+        y: Math.max(0, Math.min(95, startRef.current.valY + dYPercent)),
+      });
+    } else if (mode === "resizing") {
+      const dX = clientX - startRef.current.x;
+      // Simple scaling based on horizontal drag distance
+      const scaleDelta = dX * 0.005;
+      const newScale = Math.max(
+        0.5,
+        Math.min(3, startRef.current.initialScale + scaleDelta)
+      );
+      setScale(newScale);
+    }
   };
 
   const handleEnd = () => {
-    if (isDragging) {
-      setIsDragging(false);
-      onSave(pos.x, pos.y);
+    if (mode !== "none") {
+      setMode("none");
+      onSave({ x: pos.x, y: pos.y, rotation, scale });
     }
+  };
+
+  const handleRotate = (e) => {
+    e.stopPropagation();
+    const newRotation = (rotation + 45) % 360;
+    setRotation(newRotation);
+    onSave({ x: pos.x, y: pos.y, rotation: newRotation, scale });
   };
 
   return (
     <div
-      className="absolute flex flex-col items-center justify-center w-16 h-16 touch-none select-none z-20 active:z-50 active:scale-110 transition-transform cursor-move"
-      style={{ left: `${pos.x}%`, top: `${pos.y}%` }}
-      onTouchStart={(e) =>
-        handleStart(e.touches[0].clientX, e.touches[0].clientY)
-      }
-      onTouchMove={(e) =>
-        handleMove(e.touches[0].clientX, e.touches[0].clientY)
-      }
+      className={`absolute flex flex-col items-center justify-center w-16 h-16 select-none z-20 transition-all cursor-move group
+      ${mode !== "none" ? "z-50" : ""}`}
+      style={{
+        left: `${pos.x}%`,
+        top: `${pos.y}%`,
+        transform: `translate(-50%, -50%) rotate(${rotation}deg) scale(${scale})`,
+      }}
+      onTouchStart={(e) => handleStart(e, "moving")}
+      onMouseDown={(e) => handleStart(e, "moving")}
+      onTouchMove={handleMove}
+      onMouseMove={handleMove}
       onTouchEnd={handleEnd}
-      onMouseDown={(e) => handleStart(e.clientX, e.clientY)}
-      onMouseMove={(e) => isDragging && handleMove(e.clientX, e.clientY)}
       onMouseUp={handleEnd}
       onMouseLeave={handleEnd}
     >
-      <div className="text-5xl drop-shadow-xl filter">{def.icon}</div>
+      <div className="text-5xl drop-shadow-xl filter relative">
+        {def.icon}
+
+        {/* Border indicating selection/interaction */}
+        <div className="absolute inset-[-10px] border-2 border-white/0 group-hover:border-white/30 rounded-lg pointer-events-none transition-colors" />
+      </div>
+
+      {/* CONTROLS */}
+      {/* 1. Remove (Top Right) */}
       <button
-        className="absolute -top-4 -right-4 bg-rose-500 text-white rounded-full p-1 shadow-md scale-0 active:scale-100 transition-transform"
-        onTouchEnd={(e) => {
+        className="absolute -top-6 -right-6 bg-rose-500 text-white rounded-full p-1.5 shadow-md scale-0 group-hover:scale-100 transition-transform z-30 cursor-pointer"
+        onMouseDown={(e) => {
           e.stopPropagation();
           onRemove();
         }}
-        onMouseUp={(e) => {
+        onTouchStart={(e) => {
           e.stopPropagation();
           onRemove();
         }}
       >
-        <X size={12} />
+        <X size={14} />
       </button>
+
+      {/* 2. Rotate (Top Left) */}
+      <button
+        className="absolute -top-6 -left-6 bg-blue-500 text-white rounded-full p-1.5 shadow-md scale-0 group-hover:scale-100 transition-transform z-30 cursor-pointer"
+        onMouseDown={handleRotate}
+        onTouchStart={handleRotate}
+      >
+        <RotateCw size={14} />
+      </button>
+
+      {/* 3. Resize Handle (Bottom Right) */}
+      <div
+        className="absolute -bottom-6 -right-6 bg-emerald-500 text-white rounded-full p-1.5 shadow-md scale-0 group-hover:scale-100 transition-transform z-30 cursor-ew-resize flex items-center justify-center"
+        onMouseDown={(e) => handleStart(e, "resizing")}
+        onTouchStart={(e) => handleStart(e, "resizing")}
+      >
+        <Scaling size={14} />
+      </div>
     </div>
   );
 };
