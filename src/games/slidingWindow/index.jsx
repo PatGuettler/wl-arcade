@@ -67,19 +67,23 @@ const SlidingWindowGame = ({
     launchLevel(startLvl);
   }, []);
 
-  // Auto-center viewport on player's window
+  //Used to center the users screen. Should happen at start and as the window slides
   useEffect(() => {
-    if (gameState === "playing" && containerRef.current) {
-      const targetX =
-        LAYOUT.PADDING +
-        windowPos * LAYOUT.FULL_W +
-        (windowSize * LAYOUT.FULL_W) / 2;
-      const screenCenterX = window.innerWidth / 2;
-      const newPanX = screenCenterX - targetX * viewport.zoom;
+    if (gameState !== "playing") return;
 
-      viewport.setPan((prev) => ({ ...prev, x: newPanX }));
-    }
-  }, [windowPos, gameState, viewport.zoom, windowSize]);
+    const windowCenterX =
+      LAYOUT.PADDING + (windowPos + windowSize / 2) * LAYOUT.FULL_W;
+
+    const windowCenterY = LAYOUT.ROW_GAP / 2;
+
+    const screenCenterX = window.innerWidth / 2;
+    const screenCenterY = window.innerHeight / 2;
+
+    viewport.setPan({
+      x: screenCenterX - windowCenterX * viewport.zoom,
+      y: screenCenterY - windowCenterY * viewport.zoom,
+    });
+  }, [windowPos, windowSize, gameState]);
 
   // AI Logic Lifecycle
   useEffect(() => {
@@ -126,6 +130,9 @@ const SlidingWindowGame = ({
     const min = lvl > 5 ? -100 : 0;
     const max = lvl > 2 ? 100 : 20;
 
+    //using two different sets of numbers so the player because I was going to have the bot light up the right answer, but that make less sense.
+    // Might make this use the same array later
+    //@TODO
     const data = Array.from(
       { length: len },
       () => Math.floor(Math.random() * (max - min + 1)) + min
@@ -147,8 +154,14 @@ const SlidingWindowGame = ({
     setOpponentCollectedNodes([]);
     setFailReason("");
 
-    viewport.setZoom(1);
-    viewport.setPan({ x: 0, y: 0 });
+    const windowWidth = windowSize * LAYOUT.FULL_W;
+    const windowHeight = LAYOUT.ROW_GAP + 200;
+
+    const maxZoomX = (window.innerWidth * 0.85) / windowWidth;
+    const maxZoomY = (window.innerHeight * 0.6) / windowHeight;
+    const optimalZoom = Math.min(maxZoomX, maxZoomY, 1);
+
+    viewport.setZoom(optimalZoom);
 
     if (opponentRef.current) opponentRef.current.stop();
     opponentRef.current = new OpponentAI(lvl, size, opponentData);
@@ -254,7 +267,7 @@ const SlidingWindowGame = ({
 
       <div
         ref={containerRef}
-        className="flex-1 flex items-center justify-center relative will-change-transform origin-center h-full"
+        className="absolute top-0 left-0 will-change-transform origin-top-left"
         style={{
           transform: `translate(${viewport.pan.x}px, ${viewport.pan.y}px) scale(${viewport.zoom})`,
           transition: viewport.isDragging
