@@ -67,10 +67,12 @@ const ShopView = ({
                   }`}
                 >
                   <div className="w-24 h-24 mb-4">
-                    {/* FIXED: Added the image prop here */}
                     <UnicornAvatar
                       image={item.image}
                       className="w-full h-full"
+                      style={{
+                        transform: `scale(${item.scale || 1})`,
+                      }}
                     />
                   </div>
                   <h3 className="font-bold text-white mb-1">{item.name}</h3>

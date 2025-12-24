@@ -1,13 +1,18 @@
+//unicorn room images
 import sparkleRoomBg from "../components/assets/sparkleRoom.png";
 import rainbowRoom from "../components/assets/rainbowRoom.png";
+import starRoom from "../components/assets/starRoom.png";
+import cloudRoom from "../components/assets/cloudRoom.png";
+import dreamRoom from "../components/assets/dreamRoom.png";
+import mysticRoom from "../components/assets/mysticRoom.png";
 
+//unicorn images
 import sparkleImg from "../components/assets/sparkle.png";
-// Placeholder
 import rainbowImg from "../components/assets/rainbow.png";
-import starImg from "../components/assets/sparkle.png";
-import cloudImg from "../components/assets/sparkle.png";
-import dreamImg from "../components/assets/sparkle.png";
-import magicImg from "../components/assets/sparkle.png";
+import starImg from "../components/assets/star.png";
+import cloudImg from "../components/assets/cloud.png";
+import dreamImg from "../components/assets/dreamer.png";
+import mysticImg from "../components/assets/mystic.png";
 
 const DB_KEY = "wl_arcade_x.x.x";
 
@@ -34,20 +39,22 @@ export const UNICORNS = [
   },
   {
     id: "star",
-    name: "Stardust",
+    name: "Star",
     price: 1200,
     desc: "Shines brighter than the sun.",
     style: "bg-indigo-950",
     image: starImg,
+    bgImage: starRoom,
     accent: "text-yellow-400",
   },
   {
     id: "cloud",
-    name: "Nimbus",
+    name: "Cloud",
     price: 2500,
     desc: "Float above the competition.",
     style: "bg-sky-950",
     image: cloudImg,
+    bgImage: cloudRoom,
     accent: "text-sky-300",
   },
   {
@@ -57,16 +64,19 @@ export const UNICORNS = [
     desc: "Straight out of a fantasy.",
     style: "bg-purple-950",
     image: dreamImg,
+    bgImage: dreamRoom,
     accent: "text-purple-400",
   },
   {
-    id: "magic",
+    id: "mystic",
     name: "Mystic",
     price: 10000,
     desc: "Pure magical energy.",
     style: "bg-emerald-950",
-    image: magicImg,
+    image: mysticImg,
+    bgImage: mysticRoom,
     accent: "text-emerald-400",
+    scale: 1.6,
   },
 ];
 

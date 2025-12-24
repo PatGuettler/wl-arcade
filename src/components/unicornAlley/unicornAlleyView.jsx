@@ -7,10 +7,10 @@ import alleyMap from "./unicornAlleyMap.jpeg";
 
 const HOUSE_POSITIONS = [
   { top: "75%", left: "60%" }, // Sparkle
-  { top: "82%", left: "80%" }, // Rainbow Dash
-  { top: "82%", left: "20%" }, // Stardust
-  { top: "58%", left: "55%" }, // Nimbus
-  { top: "72%", left: "30%" }, // Dreamer
+  { top: "80%", left: "80%" }, // Rainbow
+  { top: "80%", left: "20%" }, // Star
+  { top: "58%", left: "55%" }, // Cloud
+  { top: "65%", left: "30%" }, // Dream
   { top: "80%", left: "45%" }, // Mystic
 ];
 
@@ -73,13 +73,16 @@ const UnicornAlleyView = ({ userData, onEnterRoom, onBack, onHome }) => {
 
                       {/* Avatar - Using the unicorn's actual image */}
                       <div
-                        className={`w-16 h-16 filter drop-shadow-2xl ${
+                        className={`w-32 h-32 filter drop-shadow-2xl overflow-visible ${
                           isOwned ? "animate-float" : ""
                         }`}
                       >
                         <UnicornAvatar
                           image={u.image}
                           className="w-full h-full"
+                          style={{
+                            transform: `scale(${u.scale ?? 1})`,
+                          }}
                         />
                       </div>
 
