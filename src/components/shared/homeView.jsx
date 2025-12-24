@@ -43,10 +43,12 @@ const HomeView = ({
           className="w-64 h-64 mb-12 drop-shadow-2xl animate-float relative group cursor-pointer z-20"
           onClick={onShop}
         >
-          {/* UPDATED: Passing image prop */}
           <UnicornAvatar
             image={currentUnicorn?.image}
             className="w-full h-full"
+            style={{
+              transform: `scale(${currentUnicorn?.scale || 1})`,
+            }}
           />
         </div>
 
