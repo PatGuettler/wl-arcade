@@ -5,8 +5,10 @@ import VictoryModal from "../../components/shared/victoryModal";
 import GlobalHeader from "../../components/shared/globalHeader";
 import GameHUD from "../../components/shared/gameHUD";
 import { useGameSystem } from "../../components/shared/useGameSystem";
-import { UnicornAvatar } from "../../components/assets/gameAssets";
 import { OpponentAI } from "./opponentAI";
+
+import { PlayerTrack } from "./player";
+import { OpponentTrack } from "./bot";
 
 const SlidingWindowGame = ({
   onExit,
@@ -18,10 +20,17 @@ const SlidingWindowGame = ({
   onHome,
   unicornImage,
 }) => {
+  const LAYOUT = {
+    NODE_WIDTH: 80,
+    NODE_GAP: 20,
+    FULL_W: 100,
+    PADDING: 100,
+    ROW_GAP: 200,
+  };
+
   const viewport = useGameViewport(1);
   const {
     gameState,
-    setGameState,
     level,
     elapsedTime,
     showHint,
@@ -50,12 +59,6 @@ const SlidingWindowGame = ({
   const opponentRef = useRef(null);
   const containerRef = useRef(null);
 
-  const NODE_WIDTH = 80;
-  const NODE_GAP = 20;
-  const FULL_W = NODE_WIDTH + NODE_GAP;
-  const PADDING = 100;
-  const ROW_GAP = 200;
-
   const formatTime = (ms) => (ms / 1000).toFixed(2);
 
   useEffect(() => {
@@ -67,7 +70,10 @@ const SlidingWindowGame = ({
   // Auto-center viewport on player's window
   useEffect(() => {
     if (gameState === "playing" && containerRef.current) {
-      const targetX = PADDING + windowPos * FULL_W + (windowSize * FULL_W) / 2;
+      const targetX =
+        LAYOUT.PADDING +
+        windowPos * LAYOUT.FULL_W +
+        (windowSize * LAYOUT.FULL_W) / 2;
       const screenCenterX = window.innerWidth / 2;
       const newPanX = screenCenterX - targetX * viewport.zoom;
 
@@ -75,20 +81,16 @@ const SlidingWindowGame = ({
     }
   }, [windowPos, gameState, viewport.zoom, windowSize]);
 
-  // Start opponent AI when game state changes to "playing"
+  // AI Logic Lifecycle
   useEffect(() => {
     if (
       gameState === "playing" &&
       opponentRef.current &&
       opponentLevelData.length > 0
     ) {
-      // Stop any existing opponent
       opponentRef.current.stop();
-
-      // Reset opponent position
       opponentRef.current.reset();
 
-      // Start opponent after a brief delay
       const timeoutId = setTimeout(() => {
         if (opponentRef.current && gameState === "playing") {
           opponentRef.current.start(
@@ -106,23 +108,29 @@ const SlidingWindowGame = ({
 
       return () => clearTimeout(timeoutId);
     } else if (gameState !== "playing" && opponentRef.current) {
-      // Stop opponent when not playing
       opponentRef.current.stop();
     }
   }, [gameState, opponentLevelData]);
+
+  // Cleanup opponent on unmount
+  useEffect(() => {
+    return () => {
+      if (opponentRef.current) opponentRef.current.stop();
+    };
+  }, []);
+
+  // --- Game Logic ---
 
   const launchLevel = (lvl) => {
     const len = 15 + (lvl > 5 ? 5 : 0);
     const min = lvl > 5 ? -100 : 0;
     const max = lvl > 2 ? 100 : 20;
 
-    // Generate player's data
     const data = Array.from(
       { length: len },
       () => Math.floor(Math.random() * (max - min + 1)) + min
     );
 
-    // Generate opponent's data (different from player's)
     const opponentData = Array.from(
       { length: len },
       () => Math.floor(Math.random() * (max - min + 1)) + min
@@ -142,59 +150,34 @@ const SlidingWindowGame = ({
     viewport.setZoom(1);
     viewport.setPan({ x: 0, y: 0 });
 
-    // Initialize opponent AI
-    if (opponentRef.current) {
-      opponentRef.current.stop();
-    }
+    if (opponentRef.current) opponentRef.current.stop();
     opponentRef.current = new OpponentAI(lvl, size, opponentData);
 
-    // Start the game (this will trigger the useEffect that starts the opponent)
     startGame(lvl);
   };
 
-  // Cleanup opponent on unmount
-  useEffect(() => {
-    return () => {
-      if (opponentRef.current) {
-        opponentRef.current.stop();
-      }
-    };
-  }, []);
-
-  const getCurrentWindowIndices = () => {
-    return Array.from({ length: windowSize }, (_, i) => windowPos + i);
-  };
-
-  const getMaxIndexInWindow = () => {
-    const indices = getCurrentWindowIndices();
-    let maxVal = -Infinity;
-    indices.forEach((i) => {
-      if (levelData[i] > maxVal) {
-        maxVal = levelData[i];
-      }
-    });
-    return maxVal;
-  };
-
-  const isMaxValueInWindow = (idx) => {
-    const maxVal = getMaxIndexInWindow();
-    return levelData[idx] === maxVal;
-  };
-
-  const handleNodeClick = (idx) => {
+  const handlePlayerNodeClick = (idx) => {
     if (gameState !== "playing") return;
-    const winIndices = getCurrentWindowIndices();
+
+    // Validate window bounds
+    const winIndices = Array.from(
+      { length: windowSize },
+      (_, i) => windowPos + i
+    );
     if (!winIndices.includes(idx)) return;
 
-    // Check if clicked node has the max value (allowing for ties)
-    if (isMaxValueInWindow(idx)) {
+    // Logic: Find Max in current window
+    let maxVal = -Infinity;
+    winIndices.forEach((i) => {
+      if (levelData[i] > maxVal) maxVal = levelData[i];
+    });
+
+    if (levelData[idx] === maxVal) {
       registerMove(true);
       setCollectedNodes((prev) => [...prev, idx]);
 
       if (windowPos + windowSize >= levelData.length) {
-        if (opponentRef.current) {
-          opponentRef.current.stop();
-        }
+        if (opponentRef.current) opponentRef.current.stop();
         completeLevel();
       } else {
         setWindowPos((p) => p + 1);
@@ -206,13 +189,8 @@ const SlidingWindowGame = ({
     }
   };
 
-  const handleMove = (e) => {
-    viewport.doDrag(e);
-  };
-
-  const handleUp = () => {
-    viewport.endDrag();
-  };
+  const handleMove = (e) => viewport.doDrag(e);
+  const handleUp = () => viewport.endDrag();
 
   return (
     <div
@@ -285,153 +263,28 @@ const SlidingWindowGame = ({
         }}
       >
         <div className="relative">
-          {/* PLAYER'S ROW (TOP) */}
-          <div className="flex gap-5 relative" style={{ paddingLeft: PADDING }}>
-            {/* Player's Sliding Window */}
-            {gameState === "playing" && (
-              <>
-                <div
-                  className="absolute top-1/2 -translate-y-1/2 h-40 border-4 border-emerald-500 rounded-2xl transition-all duration-500 ease-out shadow-[0_0_40px_rgba(16,185,129,0.5)] pointer-events-none z-10"
-                  style={{
-                    left: PADDING + windowPos * FULL_W - 10,
-                    width: windowSize * FULL_W - NODE_GAP + 20,
-                  }}
-                />
+          {/* Top Row: Player */}
+          <PlayerTrack
+            levelData={levelData}
+            windowPos={windowPos}
+            windowSize={windowSize}
+            collectedNodes={collectedNodes}
+            gameState={gameState}
+            showHint={showHint}
+            unicornImage={unicornImage}
+            onNodeClick={handlePlayerNodeClick}
+            layoutConstants={LAYOUT}
+          />
 
-                {/* Player's Unicorn */}
-                <div
-                  className="absolute -translate-y-1/2 pointer-events-none z-20 transition-all duration-500 ease-out"
-                  style={{
-                    left:
-                      PADDING +
-                      windowPos * FULL_W +
-                      (windowSize * FULL_W) / 2 -
-                      40,
-                    top: "50%",
-                    marginTop: "-140px",
-                  }}
-                >
-                  <div className="text-center">
-                    <div className="w-20 h-20 animate-bounce drop-shadow-2xl">
-                      <UnicornAvatar
-                        image={unicornImage}
-                        className="w-full h-full"
-                      />
-                    </div>
-                    <div className="text-emerald-400 font-black text-xs mt-1 bg-emerald-950/80 px-2 py-1 rounded-full border border-emerald-500">
-                      YOU
-                    </div>
-                  </div>
-                </div>
-              </>
-            )}
-
-            {/* Player Nodes */}
-            {levelData.map((val, idx) => {
-              let bg = "bg-slate-900 border-slate-700 text-slate-500";
-              const isInWindow =
-                idx >= windowPos && idx < windowPos + windowSize;
-              const isCollected = collectedNodes.includes(idx);
-              const maxVal = getMaxIndexInWindow();
-              const isMax = levelData[idx] === maxVal;
-
-              if (isCollected) {
-                bg = "bg-emerald-900/50 border-emerald-600 text-emerald-300";
-              } else if (gameState === "playing" && isInWindow) {
-                if (showHint && isMax) {
-                  bg =
-                    "bg-yellow-500/30 border-yellow-400 text-white shadow-[0_0_20px_rgba(234,179,8,0.4)] animate-pulse";
-                } else if (isMax) {
-                  bg =
-                    "bg-yellow-500/20 border-yellow-400 text-white shadow-[0_0_20px_rgba(234,179,8,0.3)]";
-                } else {
-                  bg = "bg-slate-800 border-slate-500 text-white";
-                }
-              }
-
-              return (
-                <div
-                  key={idx}
-                  onClick={() => handleNodeClick(idx)}
-                  className={`flex-shrink-0 rounded-2xl border-4 flex items-center justify-center text-2xl font-black ${bg} hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer relative`}
-                  style={{ width: NODE_WIDTH, height: NODE_WIDTH }}
-                >
-                  {val}
-                </div>
-              );
-            })}
-          </div>
-
-          {/* OPPONENT'S ROW (BOTTOM) */}
-          <div
-            className="flex gap-5 relative"
-            style={{ paddingLeft: PADDING, marginTop: ROW_GAP }}
-          >
-            {/* Opponent's Sliding Window */}
-            {gameState === "playing" && (
-              <>
-                <div
-                  className="absolute top-1/2 -translate-y-1/2 h-40 border-4 border-rose-500 rounded-2xl transition-all duration-500 ease-out shadow-[0_0_40px_rgba(239,68,68,0.5)] pointer-events-none z-10"
-                  style={{
-                    left: PADDING + opponentPos * FULL_W - 10,
-                    width: windowSize * FULL_W - NODE_GAP + 20,
-                  }}
-                />
-
-                {/* Opponent Unicorn */}
-                <div
-                  className="absolute -translate-y-1/2 pointer-events-none z-20 transition-all duration-500 ease-out"
-                  style={{
-                    left:
-                      PADDING +
-                      opponentPos * FULL_W +
-                      (windowSize * FULL_W) / 2 -
-                      40,
-                    top: "50%",
-                    marginTop: "-140px",
-                  }}
-                >
-                  <div className="text-center">
-                    <div className="w-20 h-20 bg-gradient-to-br from-rose-400 to-red-600 rounded-full flex items-center justify-center text-3xl animate-bounce drop-shadow-2xl border-4 border-rose-300">
-                      👾
-                    </div>
-                    <div className="text-rose-400 font-black text-xs mt-1 bg-rose-950/80 px-2 py-1 rounded-full border border-rose-500">
-                      RIVAL
-                    </div>
-                  </div>
-                </div>
-              </>
-            )}
-
-            {/* Opponent Nodes */}
-            {opponentLevelData.map((val, idx) => {
-              let bg = "bg-slate-900 border-slate-700 text-slate-500";
-              const isInWindow =
-                idx >= opponentPos && idx < opponentPos + windowSize;
-              const isCollected = opponentCollectedNodes.includes(idx);
-
-              if (isCollected) {
-                bg = "bg-rose-900/50 border-rose-600 text-rose-300";
-              } else if (gameState === "playing" && isInWindow) {
-                bg = "bg-rose-900/30 border-rose-700 text-slate-400";
-              }
-
-              return (
-                <div
-                  key={idx}
-                  className={`flex-shrink-0 rounded-2xl border-4 flex items-center justify-center text-2xl font-black ${bg} transition-all duration-200 pointer-events-none`}
-                  style={{ width: NODE_WIDTH, height: NODE_WIDTH }}
-                >
-                  {val}
-                  {isCollected && (
-                    <div className="absolute -top-8 text-3xl animate-bounce pointer-events-none">
-                      💀
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
+          {/* Bottom Row: AI Opponent */}
+          <OpponentTrack
+            levelData={opponentLevelData}
+            windowPos={opponentPos}
+            windowSize={windowSize}
+            collectedNodes={opponentCollectedNodes}
+            gameState={gameState}
+            layoutConstants={LAYOUT}
+          />
         </div>
       </div>
 
