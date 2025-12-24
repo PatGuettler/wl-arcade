@@ -12,6 +12,7 @@ export const useGameSystem = ({
   const [elapsedTime, setElapsedTime] = useState(0);
   const [showHint, setShowHint] = useState(false);
   const [movesMade, setMovesMade] = useState(0);
+  const [hintUsedThisMove, setHintUsedThisMove] = useState(false);
 
   const startTimeRef = useRef(0);
 
@@ -28,53 +29,58 @@ export const useGameSystem = ({
     return () => clearInterval(interval);
   }, [gameState]);
 
-  // Automatic Free Hints on Level 1
-  useEffect(() => {
-    if (
-      level === 1 &&
-      movesMade < maxLevelMovesForFreeHints &&
-      gameState === "playing"
-    ) {
-      setShowHint(true);
-    } else if (movesMade >= maxLevelMovesForFreeHints) {
-      // Don't auto-hide here, let the user action hide it
-    }
-  }, [level, movesMade, gameState]);
-
   const startGame = (lvl) => {
     setLevel(lvl);
     setElapsedTime(0);
     setMovesMade(0);
-    setShowHint(false);
+    setHintUsedThisMove(false);
     setGameState("playing");
     startTimeRef.current = Date.now();
+
+    // Auto-show hint on level 1
+    if (lvl === 1) {
+      setShowHint(true);
+    } else {
+      setShowHint(false);
+    }
   };
 
   const registerMove = (isValid) => {
     if (gameState !== "playing") return;
 
-    // Increment moves for tutorial/hint logic
-    setMovesMade((prev) => prev + 1);
+    // Hide hint after any move
+    setShowHint(false);
+    setHintUsedThisMove(false);
 
-    // Hide hint after a successful move
-    if (isValid) {
-      setShowHint(false);
+    // Increment moves for tutorial/hint logic
+    const newMoveCount = movesMade + 1;
+    setMovesMade(newMoveCount);
+
+    // Auto-show hint on level 1 for first 2 moves
+    if (level === 1 && newMoveCount < maxLevelMovesForFreeHints && isValid) {
+      // Small delay so hint doesn't show immediately
+      setTimeout(() => {
+        setShowHint(true);
+      }, 300);
     }
   };
 
   const buyHint = () => {
-    if (showHint || gameState !== "playing") return;
+    if (showHint || gameState !== "playing" || hintUsedThisMove) return;
 
     // Check if we are in the "free hint" window (e.g. level 1, first 2 moves)
     const isFree = level === 1 && movesMade < maxLevelMovesForFreeHints;
 
     if (isFree) {
       setShowHint(true);
+      setHintUsedThisMove(true);
       return;
     }
 
+    // Try to spend coins for hint
     if (onSpendCoins(hintCost)) {
       setShowHint(true);
+      setHintUsedThisMove(true);
     }
   };
 
@@ -86,6 +92,7 @@ export const useGameSystem = ({
   };
 
   const failLevel = (reason) => {
+    setShowHint(false);
     setGameState("failed");
   };
 
