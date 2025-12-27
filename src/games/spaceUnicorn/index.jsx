@@ -4,54 +4,16 @@ import GlobalHeader from "../../components/shared/globalHeader";
 import { UnicornAvatar } from "../../components/assets/gameAssets";
 import { Timer } from "lucide-react";
 
-// Word lists by difficulty
+/* ---------------- WORD LISTS ---------------- */
 const WORD_LISTS = {
-  easy: [
-    "cat",
-    "dog",
-    "sun",
-    "fun",
-    "run",
-    "hot",
-    "pot",
-    "top",
-    "hop",
-    "pop",
-    "yes",
-    "red",
-    "bed",
-    "pen",
-    "ten",
-  ],
-  medium: [
-    "cloud",
-    "happy",
-    "beach",
-    "music",
-    "dance",
-    "flash",
-    "storm",
-    "boost",
-    "power",
-    "magic",
-    "spell",
-    "glory",
-    "swift",
-  ],
-  hard: [
-    "rainbow",
-    "sparkle",
-    "unicorn",
-    "adventure",
-    "fantastic",
-    "brilliant",
-    "wonderful",
-    "mysterious",
-    "spectacular",
-    "magnificent",
-  ],
+  easy: ["cat", "dog", "sun", "fun", "run", "hot", "pot", "top"],
+  medium: ["cloud", "happy", "music", "magic", "storm", "power"],
+  hard: ["rainbow", "sparkle", "unicorn", "adventure", "magnificent"],
 };
 
+const CANNON_Y = "92%";
+
+/* ================= COMPONENT ================= */
 const SpaceUnicornGame = ({
   onExit,
   lastCompletedLevel = 0,
@@ -68,386 +30,296 @@ const SpaceUnicornGame = ({
   const [currentInput, setCurrentInput] = useState("");
   const [wordsDestroyed, setWordsDestroyed] = useState(0);
   const [targetWords, setTargetWords] = useState(0);
-  const [unicornFiring, setUnicornFiring] = useState(null);
+  const [projectiles, setProjectiles] = useState([]);
   const [lives, setLives] = useState(3);
 
   const inputRef = useRef(null);
   const startTimeRef = useRef(0);
-  const nextWordIdRef = useRef(0);
   const spawnIntervalRef = useRef(null);
+  const nextWordIdRef = useRef(0);
 
+  /* ---------------- UTILS ---------------- */
   const formatTime = (ms) => (ms / 1000).toFixed(2);
 
+  const getWordList = (lvl) =>
+    lvl <= 3 ? WORD_LISTS.easy : lvl <= 8 ? WORD_LISTS.medium : WORD_LISTS.hard;
+
+  const getFallSpeed = (lvl) => 0.03 + lvl * 0.01;
+  const getSpawnInterval = (lvl) => Math.max(1500, 3000 - lvl * 150);
+
+  /* ---------------- INIT ---------------- */
   useEffect(() => {
-    let startLvl = lastCompletedLevel;
-    if (startLvl === 0) startLvl = 1;
-    launchLevel(startLvl);
+    launchLevel(lastCompletedLevel || 1);
   }, []);
 
-  // Timer Logic
+  /* ---------------- TIMER ---------------- */
   useEffect(() => {
-    let interval = null;
-    if (gameState === "playing") {
-      startTimeRef.current = Date.now() - elapsedTime;
-      interval = setInterval(
-        () => setElapsedTime(Date.now() - startTimeRef.current),
-        50
-      );
-    }
+    if (gameState !== "playing") return;
+    startTimeRef.current = Date.now() - elapsedTime;
+
+    const interval = setInterval(() => {
+      setElapsedTime(Date.now() - startTimeRef.current);
+    }, 50);
+
     return () => clearInterval(interval);
   }, [gameState]);
 
-  // Keep input focused
+  /* ---------------- INPUT FOCUS ---------------- */
   useEffect(() => {
-    if (gameState === "playing" && inputRef.current) {
-      inputRef.current.focus();
+    if (gameState === "playing") {
+      inputRef.current?.focus();
     }
   }, [gameState]);
 
-  const getWordList = (lvl) => {
-    if (lvl <= 3) return WORD_LISTS.easy;
-    if (lvl <= 8) return WORD_LISTS.medium;
-    return WORD_LISTS.hard;
-  };
-
-  const getFallSpeed = (lvl) => {
-    // Pixels per frame (60fps) - gets faster each level
-    const baseSpeed = 0.0001;
-    return baseSpeed + lvl * 0.0001;
-  };
-
-  const getSpawnInterval = (lvl) => {
-    // Milliseconds between spawns - gets faster
-    return Math.max(1500, 3000 - lvl * 150);
-  };
-
+  /* ---------------- LEVEL ---------------- */
   const launchLevel = (lvl) => {
-    const target = 1 + Math.floor(lvl * 1.5);
-
     setLevel(lvl);
     setWords([]);
+    setProjectiles([]);
     setCurrentInput("");
     setWordsDestroyed(0);
-    setTargetWords(target);
-    setUnicornFiring(null);
+    setTargetWords(1 + Math.floor(lvl * 1.5));
     setLives(3);
-    setGameState("playing");
     setElapsedTime(0);
-    startTimeRef.current = Date.now();
+    setGameState("playing");
+
     nextWordIdRef.current = 0;
 
-    // Start spawning words
-    if (spawnIntervalRef.current) {
-      clearInterval(spawnIntervalRef.current);
-    }
+    clearInterval(spawnIntervalRef.current);
+    spawnIntervalRef.current = setInterval(
+      () => spawnWord(lvl),
+      getSpawnInterval(lvl)
+    );
 
-    spawnIntervalRef.current = setInterval(() => {
-      spawnWord(lvl);
-    }, getSpawnInterval(lvl));
-
-    // Spawn first word immediately
     spawnWord(lvl);
   };
 
   const spawnWord = (lvl) => {
-    const wordList = getWordList(lvl);
-    const text = wordList[Math.floor(Math.random() * wordList.length)];
-    const x = 15 + Math.random() * 70; // Keep away from edges
+    const list = getWordList(lvl);
+    const text = list[Math.floor(Math.random() * list.length)];
 
-    const newWord = {
-      id: nextWordIdRef.current++,
-      text,
-      x,
-      y: 0, // Start at top (will be adjusted for safe area)
-      speed: getFallSpeed(lvl),
-      destroyed: false,
-    };
-
-    setWords((prev) => [...prev, newWord]);
+    setWords((prev) => [
+      ...prev,
+      {
+        id: nextWordIdRef.current++,
+        text,
+        x: 15 + Math.random() * 70,
+        y: 0,
+        speed: getFallSpeed(lvl),
+        destroyed: false,
+        targeted: false,
+      },
+    ]);
   };
 
-  // Animate falling words
+  /* ---------------- FALLING ---------------- */
   useEffect(() => {
     if (gameState !== "playing") return;
 
-    const animationFrame = requestAnimationFrame(function animate() {
-      setWords((prev) => {
-        const updated = prev.map((word) => {
-          if (word.destroyed) return word;
+    let raf;
+    const animate = () => {
+      setWords((prev) =>
+        prev.map((w) => {
+          if (w.destroyed) return w;
 
-          const newY = word.y + word.speed;
+          const y = w.y + w.speed;
 
-          // Check if word reached bottom
-          if (newY > 85) {
-            // Lose a life
+          if (y > 85) {
             setLives((l) => {
-              const newLives = l - 1;
-              if (newLives <= 0) {
+              const next = l - 1;
+              if (next <= 0) {
+                clearInterval(spawnIntervalRef.current);
                 setGameState("failed");
-                if (spawnIntervalRef.current) {
-                  clearInterval(spawnIntervalRef.current);
-                }
               }
-              return newLives;
+              return next;
             });
-
-            return { ...word, destroyed: true };
+            return { ...w, destroyed: true };
           }
 
-          return { ...word, y: newY };
-        });
+          return { ...w, y };
+        })
+      );
 
-        // Remove destroyed words after animation
-        return updated.filter(
-          (w) => !w.destroyed || unicornFiring?.targetId === w.id
-        );
-      });
+      raf = requestAnimationFrame(animate);
+    };
 
-      if (gameState === "playing") {
-        requestAnimationFrame(animate);
-      }
-    });
-
-    return () => cancelAnimationFrame(animationFrame);
+    raf = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(raf);
   }, [gameState]);
 
+  /* ---------------- INPUT ---------------- */
   const handleInputChange = (e) => {
     if (gameState !== "playing") return;
 
-    const input = e.target.value.toLowerCase().trim();
-    setCurrentInput(input);
+    const value = e.target.value.toLowerCase().trim();
+    setCurrentInput(value);
 
-    // Check if input matches any active word
-    const matchedWord = words.find((w) => !w.destroyed && w.text === input);
+    const match = words.find(
+      (w) => !w.destroyed && !w.targeted && w.text === value
+    );
 
-    if (matchedWord) {
-      destroyWord(matchedWord);
-    }
+    if (match) fireAtWord(match);
   };
 
-  const destroyWord = (word) => {
-    // Launch unicorn
-    setUnicornFiring({
-      targetId: word.id,
-      targetX: word.x,
-      targetY: word.y,
-      startTime: Date.now(),
-    });
-
-    // Mark word as destroyed
+  /* ---------------- FIRE ---------------- */
+  const fireAtWord = (word) => {
     setWords((prev) =>
-      prev.map((w) => (w.id === word.id ? { ...w, destroyed: true } : w))
+      prev.map((w) => (w.id === word.id ? { ...w, targeted: true } : w))
     );
 
     setCurrentInput("");
 
-    // After animation, update count
-    setTimeout(() => {
-      const newDestroyed = wordsDestroyed + 1;
-      setWordsDestroyed(newDestroyed);
-      setUnicornFiring(null);
+    const projectileId = Date.now() + Math.random();
 
-      // Check if level complete
-      if (newDestroyed >= targetWords) {
-        if (spawnIntervalRef.current) {
-          clearInterval(spawnIntervalRef.current);
-        }
+    setProjectiles((prev) => [
+      ...prev,
+      {
+        id: projectileId,
+        target: word,
+        status: "flying",
+      },
+    ]);
 
-        onSaveProgress(level, elapsedTime / 1000);
-        setGameState("scoring");
-        setTimeout(() => setGameState("levelComplete"), 1000);
-      }
-    }, 600);
+    setTimeout(() => impact(word.id, projectileId), 500);
   };
 
-  const handleKeyDown = (e) => {
-    if (e.key === "Escape") {
-      setCurrentInput("");
-    }
-  };
+  const impact = (wordId, projectileId) => {
+    setWords((prev) =>
+      prev.map((w) => (w.id === wordId ? { ...w, destroyed: true } : w))
+    );
 
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      if (spawnIntervalRef.current) {
+    setProjectiles((prev) =>
+      prev.map((p) =>
+        p.id === projectileId ? { ...p, status: "exploding" } : p
+      )
+    );
+
+    setWordsDestroyed((d) => {
+      const next = d + 1;
+      if (next >= targetWords) {
         clearInterval(spawnIntervalRef.current);
+        onSaveProgress(level, elapsedTime / 1000);
+        setGameState("levelComplete");
       }
-    };
+      return next;
+    });
+
+    setTimeout(() => {
+      setProjectiles((prev) => prev.filter((p) => p.id !== projectileId));
+    }, 300);
+  };
+
+  /* ---------------- CLEANUP ---------------- */
+  useEffect(() => {
+    return () => clearInterval(spawnIntervalRef.current);
   }, []);
 
+  /* ================= RENDER ================= */
   return (
-    <div className="w-full h-screen bg-gradient-to-b from-slate-950 via-purple-950 to-slate-950 overflow-hidden text-white select-none relative">
-      <div className="absolute top-0 left-0 w-full z-30 pointer-events-none">
-        <div className="pointer-events-auto">
-          <GlobalHeader
-            coins={coins}
-            onBack={onExit}
-            isSubScreen={true}
-            onHome={onHome}
-          />
+    <div className="w-full h-screen bg-gradient-to-b from-slate-950 via-purple-950 to-slate-950 overflow-hidden text-white relative select-none">
+      {/* ---------- Animation ---------- */}
+      <style>{`
+        @keyframes flyToTarget {
+          from {
+            left: 50%;
+            top: ${CANNON_Y};
+            transform: translate(-50%, -50%) scale(0.6);
+          }
+          to {
+            left: var(--target-x);
+            top: var(--target-y);
+            transform: translate(-50%, -50%) scale(1);
+          }
+        }
+      `}</style>
+
+      <GlobalHeader coins={coins} onBack={onExit} onHome={onHome} isSubScreen />
+
+      {/* ---------- HUD ---------- */}
+      <div className="absolute top-16 left-1/2 -translate-x-1/2 flex gap-4 z-20">
+        <div className="bg-slate-900/80 px-3 py-1.5 rounded-xl border border-slate-700">
+          <div className="text-xs text-cyan-400">Lvl {level}</div>
+          <div className="flex items-center gap-1 text-sm">
+            <Timer size={12} />
+            {formatTime(elapsedTime)}s
+          </div>
+        </div>
+
+        <div className="bg-slate-900/80 px-3 py-1.5 rounded-xl border border-slate-700">
+          {[...Array(3)].map((_, i) => (
+            <span key={i} className={i < lives ? "" : "opacity-20"}>
+              ❤️
+            </span>
+          ))}
         </div>
       </div>
 
-      {/* Game HUD */}
-      <div
-        className="absolute left-1/2 -translate-x-1/2 z-20 flex items-center gap-3 pointer-events-none w-full justify-center px-4"
-        style={{
-          top: "max(2.25rem, calc(2rem + env(safe-area-inset-top)))",
-        }}
-      >
-        <div className="bg-slate-900/80 backdrop-blur px-3 py-1.5 rounded-xl border border-slate-700 shadow-xl pointer-events-auto flex items-center gap-2">
-          <div>
-            <div className="text-cyan-400 text-[8px] font-bold tracking-widest uppercase leading-none mb-0.5">
-              SPACE UNICORN
-            </div>
-            <div className="text-sm font-bold flex items-center gap-2 leading-none text-white">
-              <span>Lvl {level}</span>
-              <div className="flex items-center gap-1 text-slate-400 font-mono border-l border-slate-700 pl-2 ml-0.5">
-                <Timer size={12} />{" "}
-                <span className="text-xs">{formatTime(elapsedTime)}s</span>
-              </div>
-            </div>
+      {/* ---------- WORDS ---------- */}
+      {words.map((w) => (
+        <div
+          key={w.id}
+          className={`absolute transition-opacity ${
+            w.destroyed ? "opacity-0" : "opacity-100"
+          }`}
+          style={{
+            left: `${w.x}%`,
+            top: `${w.y}%`,
+            transform: "translate(-50%, -50%)",
+          }}
+        >
+          <div className="px-4 py-2 bg-slate-900/80 border-2 border-cyan-500 rounded-xl font-bold">
+            {w.text}
           </div>
         </div>
+      ))}
 
-        {/* Lives Display */}
-        <div className="bg-slate-900/80 backdrop-blur px-3 py-1.5 rounded-xl border border-slate-700 shadow-xl pointer-events-auto">
-          <div className="flex items-center gap-1">
-            {[...Array(3)].map((_, i) => (
-              <div
-                key={i}
-                className={`text-lg ${i < lives ? "666" : "opacity-20"}`}
-              >
-                ❤️
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Game World */}
-      <div
-        className="absolute inset-0"
-        style={{ top: "max(5rem, calc(4.5rem + env(safe-area-inset-top)))" }}
-      >
-        {/* Falling Words */}
-        {words.map((word) => (
+      {/* ---------- PROJECTILES ---------- */}
+      {projectiles.map((p) =>
+        p.status === "flying" ? (
           <div
-            key={word.id}
-            className={`absolute transition-opacity duration-300 ${
-              word.destroyed ? "opacity-0" : "opacity-100"
-            }`}
+            key={p.id}
+            className="absolute w-16 h-16 z-40 pointer-events-none"
             style={{
-              left: `${word.x}%`,
-              top: `${word.y}%`,
-              transform: "translate(-50%, -50%)",
-            }}
-          >
-            <div className="px-4 py-2 rounded-xl font-bold text-lg backdrop-blur border-2 shadow-xl bg-slate-900/80 border-cyan-500/50 text-cyan-400">
-              {word.text}
-            </div>
-          </div>
-        ))}
-
-        {/* Unicorn Projectile */}
-        {unicornFiring && (
-          <div
-            className="absolute w-16 h-16 transition-all duration-500 ease-out z-30 drop-shadow-2xl"
-            style={{
-              left: `50%`,
-              top: `95%`,
-              transform: `translate(-50%, -50%)`,
-              animation: `flyToTarget 0.5s ease-out forwards`,
-              "--target-x": `${unicornFiring.targetX}%`,
-              "--target-y": `${unicornFiring.targetY}%`,
+              animation: "flyToTarget 0.5s ease-out forwards",
+              "--target-x": `${p.target.x}%`,
+              "--target-y": `${p.target.y}%`,
             }}
           >
             <UnicornAvatar image={unicornImage} className="w-full h-full" />
-            <style>{`
-              @keyframes flyToTarget {
-                to {
-                  left: var(--target-x);
-                  top: var(--target-y);
-                }
-              }
-            `}</style>
           </div>
-        )}
-
-        {/* Explosion Effect */}
-        {unicornFiring && (
+        ) : (
           <div
-            className="absolute pointer-events-none z-40"
+            key={p.id}
+            className="absolute text-6xl z-50 pointer-events-none"
             style={{
-              left: `${unicornFiring.targetX}%`,
-              top: `${unicornFiring.targetY}%`,
+              left: `${p.target.x}%`,
+              top: `${p.target.y}%`,
               transform: "translate(-50%, -50%)",
             }}
           >
-            <div className="text-6xl animate-ping">💥</div>
+            💥
           </div>
-        )}
-      </div>
+        )
+      )}
 
-      {/* Cannon at Bottom */}
-      <div className="absolute bottom-32 left-1/2 -translate-x-1/2 z-20">
-        <div className="relative">
-          {/* Cannon */}
-          <div className="w-24 h-16 bg-gradient-to-b from-slate-700 to-slate-900 rounded-t-full border-4 border-slate-600 shadow-2xl flex items-end justify-center">
-            <div className="w-8 h-8 mb-1">
-              <UnicornAvatar image={unicornImage} className="w-full h-full" />
-            </div>
-          </div>
-          <div className="w-32 h-4 bg-slate-800 border-2 border-slate-700 rounded-b-lg -mt-1" />
-        </div>
-      </div>
-
-      {/* Input Area */}
+      {/* ---------- INPUT ---------- */}
       {gameState === "playing" && (
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 w-full max-w-md px-6 z-30">
-          <div className="bg-slate-900/90 backdrop-blur border-2 border-cyan-500/50 rounded-2xl p-4 shadow-2xl">
-            <div className="text-center mb-3">
-              <div className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">
-                Type to Fire
-              </div>
-              <div className="text-xl font-black text-white">
-                {wordsDestroyed} / {targetWords}
-              </div>
-            </div>
-
-            <input
-              ref={inputRef}
-              type="text"
-              value={currentInput}
-              onChange={handleInputChange}
-              onKeyDown={handleKeyDown}
-              placeholder="Type words..."
-              className="w-full bg-slate-950 border-2 border-slate-700 rounded-xl px-4 py-2 text-white text-center text-lg font-bold placeholder-slate-600 focus:outline-none focus:border-cyan-500 transition-colors"
-              autoCapitalize="off"
-              autoCorrect="off"
-              autoComplete="off"
-              spellCheck="false"
-            />
-
-            <div className="text-center text-slate-500 text-[10px] mt-2">
-              Press ESC to clear • Don't let words reach the bottom!
-            </div>
-          </div>
-        </div>
+        <input
+          ref={inputRef}
+          value={currentInput}
+          onChange={handleInputChange}
+          className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-slate-900 border-2 border-cyan-500 rounded-xl px-4 py-2 text-center font-bold"
+          placeholder="Type words..."
+        />
       )}
 
       {(gameState === "levelComplete" || gameState === "failed") && (
         <VictoryModal
           state={gameState}
-          failReason={gameState === "failed" ? "Words reached the bottom!" : ""}
           time={formatTime(elapsedTime)}
-          coinsEarned={
-            gameState === "levelComplete" && calcCoins ? calcCoins(level) : 0
-          }
-          onAction={
-            gameState === "failed"
-              ? () => launchLevel(level)
-              : () => launchLevel(level + 1)
+          coinsEarned={calcCoins?.(level) || 0}
+          onAction={() =>
+            gameState === "failed" ? launchLevel(level) : launchLevel(level + 1)
           }
           isNext={gameState === "levelComplete"}
         />
