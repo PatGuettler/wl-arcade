@@ -48,8 +48,8 @@ export const GAMES = {
   ],
   word: [
     {
-      id: "spell",
-      title: "Unicorn Spell",
+      id: "spaceUnicorn",
+      title: "Space Unicorn",
       icon: "✨",
       desc: "Type to Cast Magic",
     },
