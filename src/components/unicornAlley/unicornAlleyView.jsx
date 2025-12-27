@@ -6,11 +6,11 @@ import GlobalHeader from "../shared/globalHeader";
 import alleyMap from "./unicornAlleyMap.jpeg";
 
 const HOUSE_POSITIONS = [
-  { top: "75%", left: "60%" }, // Sparkle
-  { top: "80%", left: "80%" }, // Rainbow
-  { top: "80%", left: "20%" }, // Star
-  { top: "58%", left: "55%" }, // Cloud
-  { top: "65%", left: "30%" }, // Dream
+  { top: "65%", left: "60%" }, // Sparkle
+  { top: "80%", left: "82%" }, // Rainbow
+  { top: "75%", left: "18%" }, // Star
+  { top: "15%", left: "55%" }, // Cloud
+  { top: "50%", left: "30%" }, // Dream
   { top: "80%", left: "45%" }, // Mystic
 ];
 

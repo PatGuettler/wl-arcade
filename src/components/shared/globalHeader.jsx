@@ -11,13 +11,7 @@ const GlobalHeader = ({
   title,
 }) => {
   return (
-    <div
-      className="w-full px-4 pb-4 flex justify-between items-center z-30 bg-slate-900/50 backdrop-blur-md border-b border-white/10 shrink-0"
-      style={{
-        paddingTop: "max(1rem, env(safe-area-inset-top))",
-        minHeight: "80px",
-      }}
-    >
+    <div className="w-full p-4 flex justify-between items-center z-30 bg-slate-900/50 backdrop-blur-md border-b border-white/10 h-20 shrink-0">
       <div className="flex items-center gap-4">
         {isSubScreen ? (
           <button
