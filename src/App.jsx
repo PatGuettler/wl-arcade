@@ -6,6 +6,7 @@ import UnicornJumpGame from "./games/unicornJump";
 import SlidingWindowGame from "./games/slidingWindow";
 import CoinCountGame from "./games/coinCount";
 import CashCounterGame from "./games/cashCounter";
+import SpaceUnicornGame from "./games/spaceUnicorn";
 import ProfileView from "./components/shared/profileView";
 import HomeView from "./components/shared/homeView";
 import ShopView from "./components/shared/shopView";
@@ -362,6 +363,18 @@ export default function App() {
     if (activeGame === "cash")
       return (
         <CashCounterGame
+          onExit={goBack}
+          lastCompletedLevel={userData.cash.maxLevel + 1}
+          onSaveProgress={(lvl, time) => handleSaveProgress("cash", lvl, time)}
+          calcCoins={calculateCoins}
+          onHome={goHome}
+          coins={userData.coins}
+          onSpendCoins={handleSpendCoins}
+        />
+      );
+    if (activeGame === "spaceUnicorn")
+      return (
+        <SpaceUnicornGame
           onExit={goBack}
           lastCompletedLevel={userData.cash.maxLevel + 1}
           onSaveProgress={(lvl, time) => handleSaveProgress("cash", lvl, time)}
