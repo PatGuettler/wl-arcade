@@ -3,9 +3,6 @@ import { GAMES } from "../../games/gameConfig";
 import GlobalHeader from "./globalHeader";
 
 const CategoryView = ({
-  user,
-  setCurrentView,
-  handleLogout,
   activeCategory,
   goBack,
   userData,
