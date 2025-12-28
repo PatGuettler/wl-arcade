@@ -7,6 +7,7 @@ import SlidingWindowGame from "./games/slidingWindow";
 import CoinCountGame from "./games/coinCount";
 import CashCounterGame from "./games/cashCounter";
 import SpaceUnicornGame from "./games/spaceUnicorn";
+import MathSwipeGame from "./games/mathSwipe";
 import ProfileView from "./components/shared/profileView";
 import HomeView from "./components/shared/homeView";
 import ShopView from "./components/shared/shopView";
@@ -90,13 +91,8 @@ export default function App() {
         coin: { maxLevel: 0, times: [] },
         cash: { maxLevel: 0, times: [] },
         spaceUnicorn: { maxLevel: 0, times: [] },
+        mathSwipe: { maxLevel: 0, times: [] },
       };
-    } else {
-      db.users[user] = ensureDataStructure(db.users[user]);
-      // Ensure spaceUnicorn exists for existing users
-      if (!db.users[user].spaceUnicorn) {
-        db.users[user].spaceUnicorn = { maxLevel: 0, times: [] };
-      }
     }
 
     saveDB(db);
@@ -393,6 +389,21 @@ export default function App() {
           unicornImage={unicornImage}
         />
       );
+    if (activeGame === "mathSwipe")
+      return (
+        <MathSwipeGame
+          onExit={goBack}
+          lastCompletedLevel={userData.mathSwipe?.maxLevel + 1 || 1}
+          onSaveProgress={(lvl, time) =>
+            handleSaveProgress("mathSwipe", lvl, time)
+          }
+          calcCoins={calculateCoins}
+          onHome={goHome}
+          coins={userData.coins}
+          onSpendCoins={handleSpendCoins}
+        />
+      );
+
     return <div className="text-white">Game Not Found</div>;
   }
 
