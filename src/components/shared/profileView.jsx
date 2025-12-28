@@ -44,7 +44,14 @@ const ProfileView = ({ user, data, onBack, onHome, handleLogout }) => {
             Game Stats
           </h3>
           <div className="space-y-4 mb-8">
-            {["unicorn", "sliding", "coin", "cash", "spaceUnicorn"].map((g) => (
+            {[
+              "unicorn",
+              "sliding",
+              "coin",
+              "cash",
+              "spaceUnicorn",
+              "mathSwipe",
+            ].map((g) => (
               <div
                 key={g}
                 className="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex justify-between items-center"
@@ -58,7 +65,11 @@ const ProfileView = ({ user, data, onBack, onHome, handleLogout }) => {
                     ? "Coin Count"
                     : g === "cash"
                     ? "Cash Counter"
-                    : "Space Unicorn"}
+                    : g === "spaceUnicorn"
+                    ? "Space Unicorn"
+                    : g === "mathSwipe"
+                    ? "Math Swipe"
+                    : "Unknown"}
                 </h4>
                 <div className="bg-slate-800 px-3 py-1 rounded-lg border border-slate-700">
                   <span className="text-slate-400 text-xs">MAX LVL</span>{" "}

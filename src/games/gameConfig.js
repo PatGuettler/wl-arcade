@@ -45,6 +45,12 @@ export const GAMES = {
       icon: "💵",
       desc: "High Value Math",
     },
+    {
+      id: "mathSwipe",
+      title: "Math Swipe",
+      icon: "🎯",
+      desc: "Swipe the Right Answer",
+    },
   ],
   word: [
     {
