@@ -89,9 +89,14 @@ export default function App() {
         sliding: { maxLevel: 0, times: [] },
         coin: { maxLevel: 0, times: [] },
         cash: { maxLevel: 0, times: [] },
+        spaceUnicorn: { maxLevel: 0, times: [] },
       };
     } else {
       db.users[user] = ensureDataStructure(db.users[user]);
+      // Ensure spaceUnicorn exists for existing users
+      if (!db.users[user].spaceUnicorn) {
+        db.users[user].spaceUnicorn = { maxLevel: 0, times: [] };
+      }
     }
 
     saveDB(db);
@@ -331,7 +336,7 @@ export default function App() {
           coins={userData.coins}
           onSpendCoins={handleSpendCoins}
           onHome={goHome}
-          unicornImage={unicornImage} // <--- PASSING IMAGE HERE
+          unicornImage={unicornImage}
         />
       );
     if (activeGame === "sliding")
@@ -346,6 +351,7 @@ export default function App() {
           onHome={goHome}
           coins={userData.coins}
           onSpendCoins={handleSpendCoins}
+          unicornImage={unicornImage}
         />
       );
     if (activeGame === "coin")
@@ -376,12 +382,15 @@ export default function App() {
       return (
         <SpaceUnicornGame
           onExit={goBack}
-          lastCompletedLevel={userData.cash.maxLevel + 1}
-          onSaveProgress={(lvl, time) => handleSaveProgress("cash", lvl, time)}
+          lastCompletedLevel={userData.spaceUnicorn?.maxLevel + 1 || 1}
+          onSaveProgress={(lvl, time) =>
+            handleSaveProgress("spaceUnicorn", lvl, time)
+          }
           calcCoins={calculateCoins}
           onHome={goHome}
           coins={userData.coins}
           onSpendCoins={handleSpendCoins}
+          unicornImage={unicornImage}
         />
       );
     return <div className="text-white">Game Not Found</div>;

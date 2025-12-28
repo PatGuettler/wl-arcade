@@ -58,6 +58,8 @@ const SpaceUnicornGame = ({
   const startTimeRef = useRef(0);
   const nextWordIdRef = useRef(0);
   const spawnIntervalRef = useRef(null);
+  const animationRef = useRef(null);
+  const isAnimatingRef = useRef(false);
 
   // Timer
   useEffect(() => {
@@ -74,13 +76,24 @@ const SpaceUnicornGame = ({
 
   // Focus input
   useEffect(() => {
-    if (gameState === "playing" && inputRef.current) inputRef.current.focus();
+    if (gameState === "playing" && inputRef.current) {
+      // Small delay to ensure keyboard is ready
+      setTimeout(() => {
+        inputRef.current?.focus();
+      }, 100);
+    }
   }, [gameState]);
 
   // Launch first level
   useEffect(() => {
     let startLvl = lastCompletedLevel || 1;
     launchLevel(startLvl);
+
+    return () => {
+      isAnimatingRef.current = false;
+      if (spawnIntervalRef.current) clearInterval(spawnIntervalRef.current);
+      if (animationRef.current) cancelAnimationFrame(animationRef.current);
+    };
   }, []);
 
   const getWordList = (lvl) => {
@@ -89,12 +102,18 @@ const SpaceUnicornGame = ({
     return WORD_LISTS.hard;
   };
 
-  const getFallSpeed = (lvl) => 0.1 + lvl * 0.02;
+  const getFallSpeed = (lvl) => 0.15 + lvl * 0.02;
 
-  const getSpawnInterval = (lvl) => Math.max(1500, 3000 - lvl * 150);
+  const getSpawnInterval = (lvl) => Math.max(1200, 2500 - lvl * 120);
 
   const launchLevel = (lvl) => {
-    const target = 1 + Math.floor(lvl * 1.5);
+    const target = 2 + Math.floor(lvl * 1.5);
+
+    // Stop any existing intervals/animations
+    if (spawnIntervalRef.current) clearInterval(spawnIntervalRef.current);
+    if (animationRef.current) cancelAnimationFrame(animationRef.current);
+    isAnimatingRef.current = false;
+
     setLevel(lvl);
     setWords([]);
     setCurrentInput("");
@@ -107,12 +126,15 @@ const SpaceUnicornGame = ({
     startTimeRef.current = Date.now();
     nextWordIdRef.current = 0;
 
-    if (spawnIntervalRef.current) clearInterval(spawnIntervalRef.current);
-    spawnIntervalRef.current = setInterval(
-      () => spawnWord(lvl),
-      getSpawnInterval(lvl)
-    );
-    spawnWord(lvl);
+    // Small delay to ensure state is updated
+    setTimeout(() => {
+      spawnIntervalRef.current = setInterval(
+        () => spawnWord(lvl),
+        getSpawnInterval(lvl)
+      );
+      spawnWord(lvl);
+      startAnimation();
+    }, 50);
   };
 
   const spawnWord = (lvl) => {
@@ -126,7 +148,7 @@ const SpaceUnicornGame = ({
         id: nextWordIdRef.current++,
         text,
         x,
-        y: 0,
+        y: 5, // Start below header (header is ~80px, so 5% is safe)
         speed: getFallSpeed(lvl),
         destroyed: false,
       },
@@ -134,18 +156,23 @@ const SpaceUnicornGame = ({
   };
 
   // Animate falling words
-  useEffect(() => {
-    if (gameState !== "playing") return;
+  const startAnimation = () => {
+    if (isAnimatingRef.current) return; // Already animating
+    isAnimatingRef.current = true;
 
     const animate = () => {
+      if (!isAnimatingRef.current) return; // Stop if flag is false
+
       setWords((prev) =>
         prev.map((w) => {
           if (w.destroyed) return w;
           const newY = w.y + w.speed;
-          if (newY > 85) {
+          if (newY > 75) {
+            // Words reach bottom at 75% (before input area)
             setLives((l) => {
               const newLives = l - 1;
               if (newLives <= 0) {
+                isAnimatingRef.current = false;
                 setGameState("failed");
                 if (spawnIntervalRef.current)
                   clearInterval(spawnIntervalRef.current);
@@ -157,12 +184,12 @@ const SpaceUnicornGame = ({
           return { ...w, y: newY };
         })
       );
-      if (gameState === "playing") requestAnimationFrame(animate);
+
+      animationRef.current = requestAnimationFrame(animate);
     };
 
-    const frame = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(frame);
-  }, [gameState]);
+    animationRef.current = requestAnimationFrame(animate);
+  };
 
   // Input handling
   const handleInputChange = (e) => {
@@ -171,7 +198,10 @@ const SpaceUnicornGame = ({
     setCurrentInput(input);
 
     const matchedWord = words.find((w) => !w.destroyed && w.text === input);
-    if (matchedWord) destroyWord(matchedWord);
+    if (matchedWord) {
+      destroyWord(matchedWord);
+      e.target.value = "";
+    }
   };
 
   const destroyWord = (word) => {
@@ -179,26 +209,35 @@ const SpaceUnicornGame = ({
     const projectileId = Date.now() + Math.random();
     setProjectiles((prev) => [
       ...prev,
-      { id: projectileId, target: { x: word.x, y: word.y }, status: "flying" },
+      {
+        id: projectileId,
+        target: { x: word.x, y: word.y },
+        status: "flying",
+      },
     ]);
 
-    // Mark word destroyed
+    // Mark word destroyed immediately
     setWords((prev) =>
       prev.map((w) => (w.id === word.id ? { ...w, destroyed: true } : w))
     );
 
     setCurrentInput("");
 
-    // Impact
+    // Impact after animation
     setTimeout(() => {
       setProjectiles((prev) =>
         prev.map((p) => (p.id === projectileId ? { ...p, status: "hit" } : p))
       );
+
       const newDestroyed = wordsDestroyed + 1;
       setWordsDestroyed(newDestroyed);
 
       if (newDestroyed >= targetWords) {
+        // Stop everything
+        isAnimatingRef.current = false;
         if (spawnIntervalRef.current) clearInterval(spawnIntervalRef.current);
+        if (animationRef.current) cancelAnimationFrame(animationRef.current);
+
         onSaveProgress(level, elapsedTime / 1000);
         setGameState("scoring");
         setTimeout(() => setGameState("levelComplete"), 1000);
@@ -212,15 +251,18 @@ const SpaceUnicornGame = ({
   };
 
   const handleKeyDown = (e) => {
-    if (e.key === "Escape") setCurrentInput("");
+    if (e.key === "Escape") {
+      setCurrentInput("");
+      if (inputRef.current) inputRef.current.value = "";
+    }
   };
 
   const formatTime = (ms) => (ms / 1000).toFixed(2);
 
   return (
-    <div className="w-full h-screen bg-gradient-to-b from-slate-950 via-purple-950 to-slate-950 overflow-hidden text-white select-none relative">
-      {/* Header */}
-      <div className="absolute top-0 left-0 w-full z-30 pointer-events-none">
+    <div className="fixed inset-0 w-full h-full bg-gradient-to-b from-slate-950 via-purple-950 to-slate-950 overflow-hidden text-white select-none">
+      {/* Header - Fixed position */}
+      <div className="fixed top-0 left-0 w-full z-30 pointer-events-none">
         <div className="pointer-events-auto">
           <GlobalHeader
             coins={coins}
@@ -231,10 +273,10 @@ const SpaceUnicornGame = ({
         </div>
       </div>
 
-      {/* HUD */}
+      {/* HUD - Fixed position */}
       <div
-        className="absolute left-1/2 -translate-x-1/2 z-20 flex items-center gap-3 pointer-events-none w-full justify-center px-4"
-        style={{ top: "max(2.25rem, calc(2rem + env(safe-area-inset-top)))" }}
+        className="fixed left-1/2 -translate-x-1/2 z-20 flex items-center gap-3 pointer-events-none w-full justify-center px-4"
+        style={{ top: "5.5rem" }}
       >
         <div className="bg-slate-900/80 backdrop-blur px-3 py-1.5 rounded-xl border border-slate-700 shadow-xl pointer-events-auto flex items-center gap-2">
           <div>
@@ -265,17 +307,18 @@ const SpaceUnicornGame = ({
         </div>
       </div>
 
-      {/* Game World */}
-      <GameWorld
-        nodePositions={words.map((w) => ({ x: w.x, y: w.y }))}
-        currentIndex={null}
-        unicornImage={unicornImage}
-        projectiles={projectiles}
-      />
+      {/* Game World - Positioned to account for fixed header */}
+      <div className="fixed inset-0 pt-20">
+        <GameWorld
+          words={words}
+          projectiles={projectiles}
+          unicornImage={unicornImage}
+        />
+      </div>
 
-      {/* Input */}
+      {/* Input - Fixed at bottom */}
       {gameState === "playing" && (
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 w-full max-w-md px-6 z-30">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-full max-w-md px-6 z-30">
           <div className="bg-slate-900/90 backdrop-blur border-2 border-cyan-500/50 rounded-2xl p-4 shadow-2xl">
             <div className="text-center mb-3">
               <div className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">
