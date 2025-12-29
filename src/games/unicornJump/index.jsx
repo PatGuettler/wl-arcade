@@ -119,7 +119,7 @@ const UnicornJumpGame = ({
         showHint={showHint}
         onNodeClick={handleNodeClick}
         level={level}
-        unicornImage={unicornImage} // <--- Passed to world
+        unicornImage={unicornImage}
       />
 
       {(gameState === "levelComplete" || gameState === "failed") && (

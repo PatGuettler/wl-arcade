@@ -107,6 +107,8 @@ export default function App() {
     const currentUserData = ensureDataStructure(db.users[user]);
     const coinsEarned = 10 + nextLvl * 5;
     currentUserData.coins += coinsEarned;
+    if (nextLvl > currentUserData[gameKey].maxLevel)
+      currentUserData[gameKey].maxLevel = nextLvl;
     currentUserData[gameKey].times.push({
       level: nextLvl,
       time,
