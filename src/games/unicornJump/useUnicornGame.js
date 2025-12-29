@@ -10,7 +10,6 @@ export const useUnicornGame = (
 ) => {
   const {
     gameState,
-    setGameState, // Needed for local 'failed' override if logic differs
     level,
     elapsedTime,
     showHint,

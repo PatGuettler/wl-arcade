@@ -4,7 +4,7 @@ export const NODE_SPACING_Y = 110;
 export const PATH_WIDTH = 150;
 
 export const generateLevelData = (lvl) => {
-  const len = 15 + lvl * 5;
+  const len = 5 + lvl * 5;
   const arr = new Array(len).fill(null);
   let curr = 0;
   let last = 0;

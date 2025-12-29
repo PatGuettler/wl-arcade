@@ -3,6 +3,8 @@ import VictoryModal from "../../components/shared/victoryModal";
 import GlobalHeader from "../../components/shared/globalHeader";
 import GameWorld from "./gameWorld";
 import { Timer } from "lucide-react";
+import { useGameSystem } from "../../components/shared/useGameSystem";
+import GameHUD from "../../components/shared/gameHUD";
 
 const WORD_LISTS = {
   easy: ["cat", "dog", "sun", "fun", "run", "hot", "pot", "top", "hop", "pop"],
@@ -41,18 +43,28 @@ const SpaceUnicornGame = ({
   onSaveProgress,
   calcCoins,
   coins,
+  onSpendCoins,
   onHome,
   unicornImage,
 }) => {
-  const [gameState, setGameState] = useState("playing");
-  const [level, setLevel] = useState(1);
-  const [elapsedTime, setElapsedTime] = useState(0);
+  const { gameState, level, elapsedTime, startGame, completeLevel, failLevel } =
+    useGameSystem({
+      initialLevel: lastCompletedLevel,
+      onSaveProgress,
+      onSpendCoins,
+    });
+
+  // const [gameState, setGameState] = useState("playing");
+  // const [level, setLevel] = useState(1);
+  // const [elapsedTime, setElapsedTime] = useState(0);
   const [words, setWords] = useState([]);
   const [currentInput, setCurrentInput] = useState("");
   const [wordsDestroyed, setWordsDestroyed] = useState(0);
   const [targetWords, setTargetWords] = useState(0);
   const [projectiles, setProjectiles] = useState([]);
   const [lives, setLives] = useState(3);
+  const [viewportHeight, setViewportHeight] = useState(window.innerHeight);
+  const gameHeightRef = useRef(window.innerHeight);
 
   const inputRef = useRef(null);
   const startTimeRef = useRef(0);
@@ -61,33 +73,61 @@ const SpaceUnicornGame = ({
   const animationRef = useRef(null);
   const isAnimatingRef = useRef(false);
 
-  // Timer
+  // Handle resizing (keyboard open/close)
   useEffect(() => {
-    let interval = null;
-    if (gameState === "playing") {
-      startTimeRef.current = Date.now() - elapsedTime;
-      interval = setInterval(
-        () => setElapsedTime(Date.now() - startTimeRef.current),
-        50
-      );
-    }
-    return () => clearInterval(interval);
-  }, [gameState]);
+    const handleResize = () => {
+      // Use visualViewport if available for accurate mobile keyboard handling
+      const h = window.visualViewport
+        ? window.visualViewport.height
+        : window.innerHeight;
+      setViewportHeight(h);
+    };
 
-  // Focus input
+    // Capture the full height once for the game world (background/falling words)
+    // so it doesn't squish when the keyboard opens
+    gameHeightRef.current = window.innerHeight;
+
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener("resize", handleResize);
+    }
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener("resize", handleResize);
+      }
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
+
+  // Focus input immediately on mount and keep it focused
+  useEffect(() => {
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, []);
+
+  // Keep input focused during gameplay
   useEffect(() => {
     if (gameState === "playing" && inputRef.current) {
-      // Small delay to ensure keyboard is ready
-      setTimeout(() => {
-        inputRef.current?.focus();
-      }, 100);
+      const refocusInterval = setInterval(() => {
+        if (document.activeElement !== inputRef.current) {
+          inputRef.current?.focus();
+        }
+      }, 500);
+
+      return () => clearInterval(refocusInterval);
     }
   }, [gameState]);
 
   // Launch first level
   useEffect(() => {
     let startLvl = lastCompletedLevel || 1;
-    launchLevel(startLvl);
+
+    // Delay game start to let keyboard appear and viewport adjust
+    setTimeout(() => {
+      launchLevel(startLvl);
+    }, 500);
 
     return () => {
       isAnimatingRef.current = false;
@@ -102,7 +142,7 @@ const SpaceUnicornGame = ({
     return WORD_LISTS.hard;
   };
 
-  const getFallSpeed = (lvl) => 0.15 + lvl * 0.02;
+  const getFallSpeed = (lvl) => 0.015 + lvl * 0.02;
 
   const getSpawnInterval = (lvl) => Math.max(1200, 2500 - lvl * 120);
 
@@ -114,15 +154,14 @@ const SpaceUnicornGame = ({
     if (animationRef.current) cancelAnimationFrame(animationRef.current);
     isAnimatingRef.current = false;
 
-    setLevel(lvl);
     setWords([]);
     setCurrentInput("");
     setWordsDestroyed(0);
     setTargetWords(target);
     setProjectiles([]);
     setLives(3);
-    setGameState("playing");
-    setElapsedTime(0);
+    // setGameState("playing");
+    // setElapsedTime(0);
     startTimeRef.current = Date.now();
     nextWordIdRef.current = 0;
 
@@ -135,6 +174,7 @@ const SpaceUnicornGame = ({
       spawnWord(lvl);
       startAnimation();
     }, 50);
+    startGame(lvl);
   };
 
   const spawnWord = (lvl) => {
@@ -148,7 +188,7 @@ const SpaceUnicornGame = ({
         id: nextWordIdRef.current++,
         text,
         x,
-        y: 5, // Start below header (header is ~80px, so 5% is safe)
+        y: 5,
         speed: getFallSpeed(lvl),
         destroyed: false,
       },
@@ -157,23 +197,22 @@ const SpaceUnicornGame = ({
 
   // Animate falling words
   const startAnimation = () => {
-    if (isAnimatingRef.current) return; // Already animating
+    if (isAnimatingRef.current) return;
     isAnimatingRef.current = true;
 
     const animate = () => {
-      if (!isAnimatingRef.current) return; // Stop if flag is false
+      if (!isAnimatingRef.current) return;
 
       setWords((prev) =>
         prev.map((w) => {
           if (w.destroyed) return w;
           const newY = w.y + w.speed;
           if (newY > 75) {
-            // Words reach bottom at 75% (before input area)
             setLives((l) => {
               const newLives = l - 1;
               if (newLives <= 0) {
                 isAnimatingRef.current = false;
-                setGameState("failed");
+                // setGameState("failed");
                 if (spawnIntervalRef.current)
                   clearInterval(spawnIntervalRef.current);
               }
@@ -237,10 +276,11 @@ const SpaceUnicornGame = ({
         isAnimatingRef.current = false;
         if (spawnIntervalRef.current) clearInterval(spawnIntervalRef.current);
         if (animationRef.current) cancelAnimationFrame(animationRef.current);
+        completeLevel();
 
-        onSaveProgress(level, elapsedTime / 1000);
-        setGameState("scoring");
-        setTimeout(() => setGameState("levelComplete"), 1000);
+        // onSaveProgress(level, elapsedTime / 1000);
+        // setGameState("scoring");
+        // setTimeout(() => setGameState("levelComplete"), 1000);
       }
     }, 500);
 
@@ -260,9 +300,15 @@ const SpaceUnicornGame = ({
   const formatTime = (ms) => (ms / 1000).toFixed(2);
 
   return (
-    <div className="fixed inset-0 w-full h-full bg-gradient-to-b from-slate-950 via-purple-950 to-slate-950 overflow-hidden text-white select-none">
-      {/* Header - Fixed position */}
-      <div className="fixed top-0 left-0 w-full z-30 pointer-events-none">
+    <div
+      className="fixed inset-0 w-full bg-gradient-to-b from-slate-950 via-purple-950 to-slate-950 text-white select-none"
+      style={{
+        height: `${viewportHeight}px`,
+        overflow: "hidden",
+      }}
+    >
+      {/* Header - Absolute position to prevent keyboard shift */}
+      <div className="absolute top-0 left-0 w-full z-30 pointer-events-none">
         <div className="pointer-events-auto">
           <GlobalHeader
             coins={coins}
@@ -272,13 +318,20 @@ const SpaceUnicornGame = ({
           />
         </div>
       </div>
-
-      {/* HUD - Fixed position */}
-      <div
-        className="fixed left-1/2 -translate-x-1/2 z-20 flex items-center gap-3 pointer-events-none w-full justify-center px-4"
-        style={{ top: "5.5rem" }}
-      >
-        <div className="bg-slate-900/80 backdrop-blur px-3 py-1.5 rounded-xl border border-slate-700 shadow-xl pointer-events-auto flex items-center gap-2">
+      <GameHUD
+        title="SPACE UNICORN"
+        level={level}
+        elapsedTime={elapsedTime}
+        gameState={gameState}
+        // coins={userCoins}
+        // onBuyHint={buyHint}
+        // showHint={showHint}
+        // hintCost={hintCost}
+        // isFreeHint={level === 1 && movesMade < 2}
+      />
+      {/* HUD - Absolute position at top-24 (6rem = 96px) to match other games */}
+      <div className="absolute top-24 left-1/2 -translate-x-1/2 z-20 flex items-center gap-3 pointer-events-none w-full justify-center px-4">
+        {/*<div className="bg-slate-900/80 backdrop-blur px-3 py-1.5 rounded-xl border border-slate-700 shadow-xl pointer-events-auto flex items-center gap-2">
           <div>
             <div className="text-cyan-400 text-[8px] font-bold tracking-widest uppercase leading-none mb-0.5">
               SPACE UNICORN
@@ -291,7 +344,7 @@ const SpaceUnicornGame = ({
               </div>
             </div>
           </div>
-        </div>
+        </div> */}
 
         <div className="bg-slate-900/80 backdrop-blur px-3 py-1.5 rounded-xl border border-slate-700 shadow-xl pointer-events-auto">
           <div className="flex items-center gap-1">
@@ -307,8 +360,11 @@ const SpaceUnicornGame = ({
         </div>
       </div>
 
-      {/* Game World - Positioned to account for fixed header */}
-      <div className="fixed inset-0 pt-20">
+      {/* Game World - Fixed height wrapper to prevent squishing */}
+      <div
+        className="absolute top-0 left-0 w-full pt-20 overflow-hidden"
+        style={{ height: `${gameHeightRef.current}px` }}
+      >
         <GameWorld
           words={words}
           projectiles={projectiles}
@@ -316,39 +372,39 @@ const SpaceUnicornGame = ({
         />
       </div>
 
-      {/* Input - Fixed at bottom */}
-      {gameState === "playing" && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-full max-w-md px-6 z-30">
-          <div className="bg-slate-900/90 backdrop-blur border-2 border-cyan-500/50 rounded-2xl p-4 shadow-2xl">
-            <div className="text-center mb-3">
-              <div className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">
-                Type to Fire
-              </div>
-              <div className="text-xl font-black text-white">
-                {wordsDestroyed} / {targetWords}
-              </div>
+      {/* Input - Absolute at bottom to prevent keyboard shift */}
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 w-full max-w-md px-6 z-30">
+        <div className="bg-slate-900/90 backdrop-blur border-2 border-cyan-500/50 rounded-2xl p-4 shadow-2xl">
+          <div className="text-center mb-3">
+            <div className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">
+              Type to Fire
             </div>
-
-            <input
-              ref={inputRef}
-              type="text"
-              value={currentInput}
-              onChange={handleInputChange}
-              onKeyDown={handleKeyDown}
-              placeholder="Type words..."
-              className="w-full bg-slate-950 border-2 border-slate-700 rounded-xl px-4 py-2 text-white text-center text-lg font-bold placeholder-slate-600 focus:outline-none focus:border-cyan-500 transition-colors"
-              autoCapitalize="off"
-              autoCorrect="off"
-              autoComplete="off"
-              spellCheck="false"
-            />
-
-            <div className="text-center text-slate-500 text-[10px] mt-2">
-              Press ESC to clear • Don't let words reach the bottom!
+            <div className="text-xl font-black text-white">
+              {wordsDestroyed} / {targetWords}
             </div>
           </div>
+
+          <input
+            ref={inputRef}
+            type="text"
+            value={currentInput}
+            onChange={handleInputChange}
+            onKeyDown={handleKeyDown}
+            placeholder="Type words..."
+            className="w-full bg-slate-950 border-2 border-slate-700 rounded-xl px-4 py-2 text-white text-center text-lg font-bold placeholder-slate-600 focus:outline-none focus:border-cyan-500 transition-colors"
+            autoCapitalize="off"
+            autoCorrect="off"
+            autoComplete="off"
+            spellCheck="false"
+            autoFocus
+            inputMode="text"
+          />
+
+          <div className="text-center text-slate-500 text-[10px] mt-2">
+            Press ESC to clear • Don't let words reach the bottom!
+          </div>
         </div>
-      )}
+      </div>
 
       {/* Victory / Fail */}
       {(gameState === "levelComplete" || gameState === "failed") && (
