@@ -65,9 +65,9 @@ const ProfileView = ({ user, data, onBack, onHome, handleLogout }) => {
                     ? "Coin Count"
                     : g === "cash"
                     ? "Cash Counter"
-                    : g === "spaceUnicorn"
-                    ? "Space Unicorn"
-                    : g === "mathSwipe"
+                    : // : g === "spaceUnicorn"
+                    // ? "Space Unicorn"
+                    g === "mathSwipe"
                     ? "Math Swipe"
                     : "Unknown"}
                 </h4>
