@@ -53,12 +53,12 @@ export const GAMES = {
     },
   ],
   word: [
-    {
-      id: "spaceUnicorn",
-      title: "Space Unicorn",
-      icon: "✨",
-      desc: "Type to Cast Magic",
-    },
+    // {
+    //   id: "spaceUnicorn",
+    //   title: "Space Unicorn",
+    //   icon: "✨",
+    //   desc: "Type to Cast Magic",
+    // },
   ],
   future: [],
 };

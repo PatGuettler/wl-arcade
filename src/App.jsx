@@ -6,7 +6,7 @@ import UnicornJumpGame from "./games/unicornJump";
 import SlidingWindowGame from "./games/slidingWindow";
 import CoinCountGame from "./games/coinCount";
 import CashCounterGame from "./games/cashCounter";
-import SpaceUnicornGame from "./games/spaceUnicorn";
+// import SpaceUnicornGame from "./games/spaceUnicorn";
 import MathSwipeGame from "./games/mathSwipe";
 import ProfileView from "./components/shared/profileView";
 import HomeView from "./components/shared/homeView";
@@ -374,21 +374,21 @@ export default function App() {
           onSpendCoins={handleSpendCoins}
         />
       );
-    if (activeGame === "spaceUnicorn")
-      return (
-        <SpaceUnicornGame
-          onExit={goBack}
-          lastCompletedLevel={userData.spaceUnicorn?.maxLevel + 1 || 1}
-          onSaveProgress={(lvl, time) =>
-            handleSaveProgress("spaceUnicorn", lvl, time)
-          }
-          calcCoins={calculateCoins}
-          onHome={goHome}
-          coins={userData.coins}
-          onSpendCoins={handleSpendCoins}
-          unicornImage={unicornImage}
-        />
-      );
+    // if (activeGame === "spaceUnicorn")
+    //   return (
+    //     <SpaceUnicornGame
+    //       onExit={goBack}
+    //       lastCompletedLevel={userData.spaceUnicorn?.maxLevel + 1 || 1}
+    //       onSaveProgress={(lvl, time) =>
+    //         handleSaveProgress("spaceUnicorn", lvl, time)
+    //       }
+    //       calcCoins={calculateCoins}
+    //       onHome={goHome}
+    //       coins={userData.coins}
+    //       onSpendCoins={handleSpendCoins}
+    //       unicornImage={unicornImage}
+    //     />
+    //   );
     if (activeGame === "mathSwipe")
       return (
         <MathSwipeGame
