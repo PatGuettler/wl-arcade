@@ -19,7 +19,6 @@ const CashCounterGame = ({
     level,
     elapsedTime,
     showHint,
-    movesMade,
     startGame,
     registerMove,
     buyHint,
@@ -102,7 +101,7 @@ const CashCounterGame = ({
         onBuyHint={buyHint}
         showHint={showHint}
         hintCost={hintCost}
-        isFreeHint={level === 1 && movesMade < 2}
+        isFreeHint={level === 1}
       />
 
       <div className="flex-1 flex flex-col items-center justify-center gap-12 pt-20">

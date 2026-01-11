@@ -18,7 +18,6 @@ const MathSwipeGame = ({
     level,
     elapsedTime,
     showHint,
-    movesMade,
     startGame,
     registerMove,
     buyHint,
@@ -231,7 +230,7 @@ const MathSwipeGame = ({
         onBuyHint={buyHint}
         showHint={showHint}
         hintCost={hintCost}
-        isFreeHint={level === 1 && movesMade < 2}
+        isFreeHint={level === 1}
       />
 
       <div className="flex-1 flex flex-col items-center justify-center gap-8 pt-20 pb-8">

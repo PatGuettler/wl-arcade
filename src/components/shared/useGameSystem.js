@@ -5,13 +5,11 @@ export const useGameSystem = ({
   onSaveProgress,
   onSpendCoins,
   hintCost = 5,
-  maxLevelMovesForFreeHints = 2, // Level 1: First 2 moves are free hints
 }) => {
   const [gameState, setGameState] = useState("playing");
   const [level, setLevel] = useState(initialLevel);
   const [elapsedTime, setElapsedTime] = useState(0);
   const [showHint, setShowHint] = useState(false);
-  const [movesMade, setMovesMade] = useState(0);
 
   const startTimeRef = useRef(0);
 
@@ -30,21 +28,14 @@ export const useGameSystem = ({
 
   // Automatic Free Hints on Level 1
   useEffect(() => {
-    if (
-      level === 1 &&
-      movesMade < maxLevelMovesForFreeHints &&
-      gameState === "playing"
-    ) {
+    if (level === 1 && gameState === "playing") {
       setShowHint(true);
-    } else if (movesMade >= maxLevelMovesForFreeHints) {
-      // Don't auto-hide here, let the user action hide it
     }
-  }, [level, movesMade, gameState]);
+  }, [level, gameState]);
 
   const startGame = (lvl) => {
     setLevel(lvl);
     setElapsedTime(0);
-    setMovesMade(0);
     setShowHint(false);
     setGameState("playing");
     startTimeRef.current = Date.now();
@@ -52,9 +43,6 @@ export const useGameSystem = ({
 
   const registerMove = (isValid) => {
     if (gameState !== "playing") return;
-
-    // Increment moves for tutorial/hint logic
-    setMovesMade((prev) => prev + 1);
 
     // Hide hint after a successful move
     if (isValid) {
@@ -66,7 +54,7 @@ export const useGameSystem = ({
     if (showHint || gameState !== "playing") return;
 
     // Check if we are in the "free hint" window (e.g. level 1, first 2 moves)
-    const isFree = level === 1 && movesMade < maxLevelMovesForFreeHints;
+    const isFree = level === 1;
 
     if (isFree) {
       setShowHint(true);
@@ -95,7 +83,6 @@ export const useGameSystem = ({
     level,
     elapsedTime,
     showHint,
-    movesMade,
     startGame,
     registerMove,
     buyHint,
