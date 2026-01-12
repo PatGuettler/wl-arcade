@@ -175,6 +175,9 @@ const MathSwipeGame = ({
   };
 
   const submitAnswer = (card) => {
+    // Prevent double submission . . . when using the hint, it was giving +2 to progress
+    if (gameState !== "playing") return;
+
     registerMove(card.isCorrect);
 
     if (card.isCorrect) {
@@ -243,19 +246,11 @@ const MathSwipeGame = ({
         showHint={showHint}
         hintCost={hintCost}
         isFreeHint={level === 1}
+        progress={problemsCompleted}
+        target={targetProblems}
       />
 
-      <div className="flex-1 flex flex-col items-center justify-center gap-8 pt-20 pb-8">
-        {/* Progress */}
-        <div className="bg-slate-900/80 backdrop-blur px-6 py-3 rounded-2xl border border-slate-700 shadow-xl">
-          <div className="text-cyan-400 text-xs font-bold tracking-widest mb-1">
-            PROGRESS
-          </div>
-          <div className="text-3xl font-black text-white">
-            {problemsCompleted} / {targetProblems}
-          </div>
-        </div>
-
+      <div className="flex-1 flex flex-col items-center justify-center gap-8 pt-36 pb-8">
         {/* Math Problem */}
         {problem && (
           <div className="bg-slate-900/90 backdrop-blur border-2 border-cyan-500/50 rounded-3xl p-8 shadow-2xl">

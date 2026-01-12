@@ -185,7 +185,7 @@ export const useGameViewport = (initialZoom = 1) => {
     doDrag,
     endDrag,
     applyZoom,
-    centerOn,
+    // centerOn,
     touchStart,
     touchMove,
     touchEnd,
