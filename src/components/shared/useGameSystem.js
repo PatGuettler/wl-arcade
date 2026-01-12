@@ -17,7 +17,7 @@ export const useGameSystem = ({
   useEffect(() => {
     let interval = null;
     if (gameState === "playing") {
-      startTimeRef.current = Date.now() - elapsedTime; // Resume correctly
+      startTimeRef.current = Date.now() - elapsedTime;
       interval = setInterval(
         () => setElapsedTime(Date.now() - startTimeRef.current),
         50
@@ -73,7 +73,7 @@ export const useGameSystem = ({
     setTimeout(() => setGameState("levelComplete"), 1000);
   };
 
-  const failLevel = (reason) => {
+  const failLevel = () => {
     setGameState("failed");
   };
 

@@ -166,13 +166,13 @@ export const saveDB = (db) => {
   localStorage.setItem(DB_KEY, JSON.stringify(db));
 };
 
-export const getBestTimes = (timesArray) => {
-  const bests = {};
-  if (!timesArray) return bests;
-  timesArray.forEach((entry) => {
-    if (!bests[entry.level] || entry.time < bests[entry.level]) {
-      bests[entry.level] = entry.time;
-    }
-  });
-  return bests;
-};
+// export const getBestTimes = (timesArray) => {
+//   const bests = {};
+//   if (!timesArray) return bests;
+//   timesArray.forEach((entry) => {
+//     if (!bests[entry.level] || entry.time < bests[entry.level]) {
+//       bests[entry.level] = entry.time;
+//     }
+//   });
+//   return bests;
+// };
