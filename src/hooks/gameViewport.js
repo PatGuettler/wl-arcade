@@ -164,18 +164,18 @@ export const useGameViewport = (initialZoom = 1) => {
     setPan({ x: newPanX, y: newPanY });
   };
 
-  // Center on a world coordinate (works for both X and Y axis)
-  const centerOn = (worldCoord, axis = "x") => {
-    if (axis === "y") {
-      const screenCenter = window.innerHeight / 2;
-      const newPanY = screenCenter - worldCoord * stateRef.current.zoom;
-      setPan((prev) => ({ ...prev, y: newPanY }));
-    } else {
-      const screenCenter = window.innerWidth / 2;
-      const newPanX = screenCenter - worldCoord * stateRef.current.zoom;
-      setPan((prev) => ({ ...prev, x: newPanX }));
-    }
-  };
+  // // Center on a world coordinate (works for both X and Y axis)
+  // const centerOn = (worldCoord, axis = "x") => {
+  //   if (axis === "y") {
+  //     const screenCenter = window.innerHeight / 2;
+  //     const newPanY = screenCenter - worldCoord * stateRef.current.zoom;
+  //     setPan((prev) => ({ ...prev, y: newPanY }));
+  //   } else {
+  //     const screenCenter = window.innerWidth / 2;
+  //     const newPanX = screenCenter - worldCoord * stateRef.current.zoom;
+  //     setPan((prev) => ({ ...prev, x: newPanX }));
+  //   }
+  // };
 
   return {
     zoom,
@@ -185,7 +185,7 @@ export const useGameViewport = (initialZoom = 1) => {
     doDrag,
     endDrag,
     applyZoom,
-    centerOn,
+    // centerOn,
     touchStart,
     touchMove,
     touchEnd,

@@ -11,6 +11,8 @@ const GameHUD = ({
   showHint,
   hintCost,
   isFreeHint = false,
+  progress,
+  target,
 }) => {
   const formatTime = (ms) => (ms / 1000).toFixed(2);
 
@@ -29,6 +31,20 @@ const GameHUD = ({
             </div>
           </div>
         </div>
+
+        {typeof progress !== "undefined" && typeof target !== "undefined" && (
+          <>
+            <div className="w-px h-8 bg-slate-700" /> {/* Vertical Divider */}
+            <div>
+              <div className="text-cyan-400 text-[10px] font-bold tracking-widest uppercase leading-none mb-1">
+                PROGRESS
+              </div>
+              <div className="text-xl font-bold text-white leading-none">
+                {progress} / {target}
+              </div>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Hint Button */}

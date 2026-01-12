@@ -54,15 +54,15 @@ export class OpponentAI {
     this.isRunning = false;
   }
 
-  // Get current position
-  getPosition() {
-    return this.position;
-  }
+  // // Get current position
+  // getPosition() {
+  //   return this.position;
+  // }
 
-  // Get the indices the opponent's window covers
-  getWindowIndices() {
-    return Array.from({ length: this.windowSize }, (_, i) => this.position + i);
-  }
+  // // Get the indices the opponent's window covers
+  // getWindowIndices() {
+  //   return Array.from({ length: this.windowSize }, (_, i) => this.position + i);
+  // }
 
   // Reset opponent position
   reset() {

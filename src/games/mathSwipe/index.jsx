@@ -18,7 +18,6 @@ const MathSwipeGame = ({
     level,
     elapsedTime,
     showHint,
-    movesMade,
     startGame,
     registerMove,
     buyHint,
@@ -175,34 +174,49 @@ const MathSwipeGame = ({
     setSwipeOffset({ x: dx, y: dy });
   };
 
+  const submitAnswer = (card) => {
+    // Prevent double submission . . . when using the hint, it was giving +2 to progress
+    if (gameState !== "playing") return;
+
+    registerMove(card.isCorrect);
+
+    if (card.isCorrect) {
+      // Correct!
+      const newCompleted = problemsCompleted + 1;
+      setProblemsCompleted(newCompleted);
+
+      if (newCompleted >= targetProblems) {
+        completeLevel();
+      } else {
+        // Generate next problem
+        setTimeout(() => generateNewProblem(level), 300);
+      }
+    } else {
+      // Wrong!
+      failLevel("Wrong answer!");
+    }
+  };
+
   const handleSwipeEnd = () => {
     if (!swipingCard || gameState !== "playing") return;
 
-    const threshold = 80;
+    const threshold = 80; // Distance required for a swipe
+    const tapThreshold = 5; // Maximum distance allowed for a "tap"
+
     const swipedCard = cards.find((c) => c.id === swipingCard);
+
+    // Check total movement distance
+    const dist = Math.sqrt(swipeOffset.x ** 2 + swipeOffset.y ** 2);
 
     if (
       Math.abs(swipeOffset.x) > threshold ||
       Math.abs(swipeOffset.y) > threshold
     ) {
-      // Card was swiped
-      registerMove(swipedCard.isCorrect);
-
-      if (swipedCard.isCorrect) {
-        // Correct!
-        const newCompleted = problemsCompleted + 1;
-        setProblemsCompleted(newCompleted);
-
-        if (newCompleted >= targetProblems) {
-          completeLevel();
-        } else {
-          // Generate next problem
-          setTimeout(() => generateNewProblem(level), 300);
-        }
-      } else {
-        // Wrong!
-        failLevel("Wrong answer!");
-      }
+      // Logic 1: It was a valid swipe
+      submitAnswer(swipedCard);
+    } else if (dist < tapThreshold) {
+      // Logic 2: It was a tap
+      submitAnswer(swipedCard);
     }
 
     setSwipingCard(null);
@@ -231,20 +245,12 @@ const MathSwipeGame = ({
         onBuyHint={buyHint}
         showHint={showHint}
         hintCost={hintCost}
-        isFreeHint={level === 1 && movesMade < 2}
+        isFreeHint={level === 1}
+        progress={problemsCompleted}
+        target={targetProblems}
       />
 
-      <div className="flex-1 flex flex-col items-center justify-center gap-8 pt-20 pb-8">
-        {/* Progress */}
-        <div className="bg-slate-900/80 backdrop-blur px-6 py-3 rounded-2xl border border-slate-700 shadow-xl">
-          <div className="text-cyan-400 text-xs font-bold tracking-widest mb-1">
-            PROGRESS
-          </div>
-          <div className="text-3xl font-black text-white">
-            {problemsCompleted} / {targetProblems}
-          </div>
-        </div>
-
+      <div className="flex-1 flex flex-col items-center justify-center gap-8 pt-36 pb-8">
         {/* Math Problem */}
         {problem && (
           <div className="bg-slate-900/90 backdrop-blur border-2 border-cyan-500/50 rounded-3xl p-8 shadow-2xl">

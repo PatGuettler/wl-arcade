@@ -327,7 +327,7 @@ const SpaceUnicornGame = ({
         // onBuyHint={buyHint}
         // showHint={showHint}
         // hintCost={hintCost}
-        // isFreeHint={level === 1 && movesMade < 2}
+        // isFreeHint={level === 1}
       />
       {/* HUD - Absolute position at top-24 (6rem = 96px) to match other games */}
       <div className="absolute top-24 left-1/2 -translate-x-1/2 z-20 flex items-center gap-3 pointer-events-none w-full justify-center px-4">

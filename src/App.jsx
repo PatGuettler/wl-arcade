@@ -82,7 +82,7 @@ export default function App() {
     db.lastUser = user;
     if (!db.users[user]) {
       db.users[user] = {
-        coins: 100000000000,
+        coins: 1000,
         ownedUnicorns: ["sparkle"],
         equippedUnicorn: "sparkle",
         furniture: { inventory: {}, placements: {} },

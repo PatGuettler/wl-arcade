@@ -34,7 +34,6 @@ const SlidingWindowGame = ({
     level,
     elapsedTime,
     showHint,
-    movesMade,
     startGame,
     registerMove,
     buyHint,
@@ -154,8 +153,9 @@ const SlidingWindowGame = ({
     setOpponentCollectedNodes([]);
     setFailReason("");
 
+    const buffer = 70;
     const windowWidth = windowSize * LAYOUT.FULL_W;
-    const windowHeight = LAYOUT.ROW_GAP + 200;
+    const windowHeight = LAYOUT.ROW_GAP + 200 + buffer * 2;
 
     const maxZoomX = (window.innerWidth * 0.85) / windowWidth;
     const maxZoomY = (window.innerHeight * 0.6) / windowHeight;
@@ -247,7 +247,7 @@ const SlidingWindowGame = ({
         onBuyHint={buyHint}
         showHint={showHint}
         hintCost={hintCost}
-        isFreeHint={level === 1 && movesMade < 2}
+        isFreeHint={level === 1}
       />
 
       <div className="absolute bottom-6 right-6 z-30 flex flex-col gap-2 pointer-events-auto">

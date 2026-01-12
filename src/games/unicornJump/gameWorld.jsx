@@ -14,8 +14,7 @@ const GameWorld = ({
   level,
   unicornImage,
 }) => {
-  const shouldShowOverlay =
-    (level === 1 && visitedIndices.length <= 2) || showHint;
+  const shouldShowOverlay = level === 1 || showHint;
 
   let tutorialProps = null;
   if (shouldShowOverlay && nodePositions.length > 0) {
