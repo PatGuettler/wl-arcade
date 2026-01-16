@@ -1,6 +1,6 @@
 {
   "appId": "com.grapegames.wlarcade",
-  "appName": "wl-arcade",
+  "appName": "Unicorn Arcade",
   "webDir": "dist",
   "server": {
     "androidScheme": "https"

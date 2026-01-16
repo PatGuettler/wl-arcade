@@ -12,7 +12,7 @@ const LoginView = ({ user, setUser, handleLogin }) => {
           <div className="w-full h-full bg-slate-900 rounded-t-[1.35rem] overflow-hidden">
             <img
               src="/loginIcon.png"
-              alt="WL Arcade"
+              alt="Unicorn Arcade"
               className="w-full h-full object-cover"
             />
           </div>
@@ -24,7 +24,7 @@ const LoginView = ({ user, setUser, handleLogin }) => {
 
           <div className="text-center mb-8">
             <h1 className="text-3xl font-black text-white mb-2">
-              WL<span className="text-cyan-400">ARCADE</span>
+              UNICORN<span className="text-cyan-400">ARCADE</span>
             </h1>
             <p className="text-slate-400 text-sm">
               Train your brain with code-based games.

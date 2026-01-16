@@ -6,7 +6,6 @@ import UnicornJumpGame from "./games/unicornJump";
 import SlidingWindowGame from "./games/slidingWindow";
 import CoinCountGame from "./games/coinCount";
 import CashCounterGame from "./games/cashCounter";
-// import SpaceUnicornGame from "./games/spaceUnicorn";
 import MathSwipeGame from "./games/mathSwipe";
 import ProfileView from "./components/shared/profileView";
 import HomeView from "./components/shared/homeView";
@@ -17,6 +16,7 @@ import { CATEGORIES } from "./games/gameConfig";
 import LoginView from "./components/shared/loginView";
 import CategoryView from "./components/shared/categoryView";
 import DashBoardView from "./components/shared/dashboardView";
+import AdBar from "./components/shared/adBar";
 
 export default function App() {
   const [currentView, setCurrentView] = useState("login");
@@ -236,6 +236,10 @@ export default function App() {
 
   const calculateCoins = (lvl) => 10 + lvl * 5;
 
+  // Determine if we should show the ad bar
+  // Show ads everywhere except login screen
+  const shouldShowAdBar = currentView !== "login";
+
   // View Routing
   if (currentView === "login")
     return (
@@ -244,73 +248,91 @@ export default function App() {
 
   if (currentView === "home")
     return (
-      <HomeView
-        user={user}
-        userData={userData || { coins: 0, equippedUnicorn: "sparkle" }}
-        onPlay={handlePlay}
-        onShop={() => setCurrentView("shop")}
-        onProfile={() => setCurrentView("profile")}
-        onAlley={() => setCurrentView("alley")}
-        onHome={goHome}
-      />
+      <>
+        <HomeView
+          user={user}
+          userData={userData || { coins: 0, equippedUnicorn: "sparkle" }}
+          onPlay={handlePlay}
+          onShop={() => setCurrentView("shop")}
+          onProfile={() => setCurrentView("profile")}
+          onAlley={() => setCurrentView("alley")}
+          onHome={goHome}
+        />
+        {/* {shouldShowAdBar && <AdBar />} */}
+      </>
     );
 
   if (currentView === "shop")
     return (
-      <ShopView
-        userData={userData}
-        onBuy={handleBuyUnicorn}
-        onBuyFurniture={handleBuyFurniture}
-        onEquip={handleEquipUnicorn}
-        onBack={() => setCurrentView("home")}
-        onHome={goHome}
-      />
+      <>
+        <ShopView
+          userData={userData}
+          onBuy={handleBuyUnicorn}
+          onBuyFurniture={handleBuyFurniture}
+          onEquip={handleEquipUnicorn}
+          onBack={() => setCurrentView("home")}
+          onHome={goHome}
+        />
+        {/* {shouldShowAdBar && <AdBar />} */}
+      </>
     );
 
   if (currentView === "alley")
     return (
-      <UnicornAlleyView
-        userData={userData}
-        onEnterRoom={enterRoom}
-        onBack={() => setCurrentView("home")}
-        onHome={goHome}
-      />
+      <>
+        <UnicornAlleyView
+          userData={userData}
+          onEnterRoom={enterRoom}
+          onBack={() => setCurrentView("home")}
+          onHome={goHome}
+        />
+        {/* {shouldShowAdBar && <AdBar />} */}
+      </>
     );
 
   if (currentView === "room")
     return (
-      <RoomView
-        unicornId={activeRoomUnicorn}
-        userData={userData}
-        onPlaceItem={handlePlaceItem}
-        onRemoveItem={handleRemoveItem}
-        onBack={() => setCurrentView("alley")}
-        onHome={goHome}
-      />
+      <>
+        <RoomView
+          unicornId={activeRoomUnicorn}
+          userData={userData}
+          onPlaceItem={handlePlaceItem}
+          onRemoveItem={handleRemoveItem}
+          onBack={() => setCurrentView("alley")}
+          onHome={goHome}
+        />
+        {/* {shouldShowAdBar && <AdBar />} */}
+      </>
     );
 
   if (currentView === "profile")
     return (
-      <ProfileView
-        user={user}
-        data={userData}
-        onBack={() => setCurrentView("home")}
-        onHome={goHome}
-        handleLogout={handleLogout}
-      />
+      <>
+        <ProfileView
+          user={user}
+          data={userData}
+          onBack={() => setCurrentView("home")}
+          onHome={goHome}
+          handleLogout={handleLogout}
+        />
+        {/* {shouldShowAdBar && <AdBar />} */}
+      </>
     );
 
   if (currentView === "dashboard")
     return (
-      <DashBoardView
-        user={user}
-        userData={userData}
-        selectCategory={selectCategory}
-        setCurrentView={setCurrentView}
-        handleLogout={handleLogout}
-        categories={CATEGORIES}
-        onHome={goHome}
-      />
+      <>
+        <DashBoardView
+          user={user}
+          userData={userData}
+          selectCategory={selectCategory}
+          setCurrentView={setCurrentView}
+          handleLogout={handleLogout}
+          categories={CATEGORIES}
+          onHome={goHome}
+        />
+        {/* {shouldShowAdBar && <AdBar />} */}
+      </>
     );
 
   if (currentView === "game") {
@@ -322,86 +344,90 @@ export default function App() {
 
     if (activeGame === "unicorn")
       return (
-        <UnicornJumpGame
-          onExit={goBack}
-          lastCompletedLevel={userData.unicorn.maxLevel + 1}
-          onSaveProgress={(lvl, time) =>
-            handleSaveProgress("unicorn", lvl, time)
-          }
-          calcCoins={calculateCoins}
-          coins={userData.coins}
-          onSpendCoins={handleSpendCoins}
-          onHome={goHome}
-          unicornImage={unicornImage}
-        />
+        <>
+          <UnicornJumpGame
+            onExit={goBack}
+            lastCompletedLevel={userData.unicorn.maxLevel + 1}
+            onSaveProgress={(lvl, time) =>
+              handleSaveProgress("unicorn", lvl, time)
+            }
+            calcCoins={calculateCoins}
+            coins={userData.coins}
+            onSpendCoins={handleSpendCoins}
+            onHome={goHome}
+            unicornImage={unicornImage}
+          />
+          {/* {shouldShowAdBar && <AdBar />} */}
+        </>
       );
     if (activeGame === "sliding")
       return (
-        <SlidingWindowGame
-          onExit={goBack}
-          lastCompletedLevel={userData.sliding.maxLevel + 1}
-          onSaveProgress={(lvl, time) =>
-            handleSaveProgress("sliding", lvl, time)
-          }
-          calcCoins={calculateCoins}
-          onHome={goHome}
-          coins={userData.coins}
-          onSpendCoins={handleSpendCoins}
-          unicornImage={unicornImage}
-        />
+        <>
+          <SlidingWindowGame
+            onExit={goBack}
+            lastCompletedLevel={userData.sliding.maxLevel + 1}
+            onSaveProgress={(lvl, time) =>
+              handleSaveProgress("sliding", lvl, time)
+            }
+            calcCoins={calculateCoins}
+            onHome={goHome}
+            coins={userData.coins}
+            onSpendCoins={handleSpendCoins}
+            unicornImage={unicornImage}
+          />
+          {/* {shouldShowAdBar && <AdBar />} */}
+        </>
       );
     if (activeGame === "coin")
       return (
-        <CoinCountGame
-          onExit={goBack}
-          lastCompletedLevel={userData.coin.maxLevel + 1}
-          onSaveProgress={(lvl, time) => handleSaveProgress("coin", lvl, time)}
-          calcCoins={calculateCoins}
-          onHome={goHome}
-          coins={userData.coins}
-          onSpendCoins={handleSpendCoins}
-        />
+        <>
+          <CoinCountGame
+            onExit={goBack}
+            lastCompletedLevel={userData.coin.maxLevel + 1}
+            onSaveProgress={(lvl, time) =>
+              handleSaveProgress("coin", lvl, time)
+            }
+            calcCoins={calculateCoins}
+            onHome={goHome}
+            coins={userData.coins}
+            onSpendCoins={handleSpendCoins}
+          />
+          {/* {shouldShowAdBar && <AdBar />} */}
+        </>
       );
     if (activeGame === "cash")
       return (
-        <CashCounterGame
-          onExit={goBack}
-          lastCompletedLevel={userData.cash.maxLevel + 1}
-          onSaveProgress={(lvl, time) => handleSaveProgress("cash", lvl, time)}
-          calcCoins={calculateCoins}
-          onHome={goHome}
-          coins={userData.coins}
-          onSpendCoins={handleSpendCoins}
-        />
+        <>
+          <CashCounterGame
+            onExit={goBack}
+            lastCompletedLevel={userData.cash.maxLevel + 1}
+            onSaveProgress={(lvl, time) =>
+              handleSaveProgress("cash", lvl, time)
+            }
+            calcCoins={calculateCoins}
+            onHome={goHome}
+            coins={userData.coins}
+            onSpendCoins={handleSpendCoins}
+          />
+          {/* {shouldShowAdBar && <AdBar />} */}
+        </>
       );
-    // if (activeGame === "spaceUnicorn")
-    //   return (
-    //     <SpaceUnicornGame
-    //       onExit={goBack}
-    //       lastCompletedLevel={userData.spaceUnicorn?.maxLevel + 1 || 1}
-    //       onSaveProgress={(lvl, time) =>
-    //         handleSaveProgress("spaceUnicorn", lvl, time)
-    //       }
-    //       calcCoins={calculateCoins}
-    //       onHome={goHome}
-    //       coins={userData.coins}
-    //       onSpendCoins={handleSpendCoins}
-    //       unicornImage={unicornImage}
-    //     />
-    //   );
     if (activeGame === "mathSwipe")
       return (
-        <MathSwipeGame
-          onExit={goBack}
-          lastCompletedLevel={userData.mathSwipe?.maxLevel + 1 || 1}
-          onSaveProgress={(lvl, time) =>
-            handleSaveProgress("mathSwipe", lvl, time)
-          }
-          calcCoins={calculateCoins}
-          onHome={goHome}
-          coins={userData.coins}
-          onSpendCoins={handleSpendCoins}
-        />
+        <>
+          <MathSwipeGame
+            onExit={goBack}
+            lastCompletedLevel={userData.mathSwipe?.maxLevel + 1 || 1}
+            onSaveProgress={(lvl, time) =>
+              handleSaveProgress("mathSwipe", lvl, time)
+            }
+            calcCoins={calculateCoins}
+            onHome={goHome}
+            coins={userData.coins}
+            onSpendCoins={handleSpendCoins}
+          />
+          {/* {shouldShowAdBar && <AdBar />} */}
+        </>
       );
 
     return <div className="text-white">Game Not Found</div>;
@@ -409,17 +435,20 @@ export default function App() {
 
   if (currentView === "category")
     return (
-      <CategoryView
-        selectCategory={selectCategory}
-        user={user}
-        setCurrentView={setCurrentView}
-        handleLogout={handleLogout}
-        activeCategory={activeCategory}
-        goBack={goBack}
-        userData={userData}
-        selectGame={selectGame}
-        onHome={goHome}
-      />
+      <>
+        <CategoryView
+          selectCategory={selectCategory}
+          user={user}
+          setCurrentView={setCurrentView}
+          handleLogout={handleLogout}
+          activeCategory={activeCategory}
+          goBack={goBack}
+          userData={userData}
+          selectGame={selectGame}
+          onHome={goHome}
+        />
+        {/* {shouldShowAdBar && <AdBar />} */}
+      </>
     );
 
   return null;
