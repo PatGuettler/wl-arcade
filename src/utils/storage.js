@@ -14,7 +14,7 @@ import cloudImg from "../components/assets/cloud.png";
 import dreamImg from "../components/assets/dreamer.png";
 import mysticImg from "../components/assets/mystic.png";
 
-const DB_KEY = "wl_arcade_x.x.x";
+const DB_KEY = "unicorn_arcade_v1";
 
 export const UNICORNS = [
   {
