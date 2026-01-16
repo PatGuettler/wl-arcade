@@ -258,7 +258,7 @@ export default function App() {
           onAlley={() => setCurrentView("alley")}
           onHome={goHome}
         />
-        {shouldShowAdBar && <AdBar />}
+        {/* {shouldShowAdBar && <AdBar />} */}
       </>
     );
 
@@ -273,7 +273,7 @@ export default function App() {
           onBack={() => setCurrentView("home")}
           onHome={goHome}
         />
-        {shouldShowAdBar && <AdBar />}
+        {/* {shouldShowAdBar && <AdBar />} */}
       </>
     );
 
@@ -286,7 +286,7 @@ export default function App() {
           onBack={() => setCurrentView("home")}
           onHome={goHome}
         />
-        {shouldShowAdBar && <AdBar />}
+        {/* {shouldShowAdBar && <AdBar />} */}
       </>
     );
 
@@ -301,7 +301,7 @@ export default function App() {
           onBack={() => setCurrentView("alley")}
           onHome={goHome}
         />
-        {shouldShowAdBar && <AdBar />}
+        {/* {shouldShowAdBar && <AdBar />} */}
       </>
     );
 
@@ -315,7 +315,7 @@ export default function App() {
           onHome={goHome}
           handleLogout={handleLogout}
         />
-        {shouldShowAdBar && <AdBar />}
+        {/* {shouldShowAdBar && <AdBar />} */}
       </>
     );
 
@@ -331,7 +331,7 @@ export default function App() {
           categories={CATEGORIES}
           onHome={goHome}
         />
-        {shouldShowAdBar && <AdBar />}
+        {/* {shouldShowAdBar && <AdBar />} */}
       </>
     );
 
@@ -357,7 +357,7 @@ export default function App() {
             onHome={goHome}
             unicornImage={unicornImage}
           />
-          {shouldShowAdBar && <AdBar />}
+          {/* {shouldShowAdBar && <AdBar />} */}
         </>
       );
     if (activeGame === "sliding")
@@ -375,7 +375,7 @@ export default function App() {
             onSpendCoins={handleSpendCoins}
             unicornImage={unicornImage}
           />
-          {shouldShowAdBar && <AdBar />}
+          {/* {shouldShowAdBar && <AdBar />} */}
         </>
       );
     if (activeGame === "coin")
@@ -392,7 +392,7 @@ export default function App() {
             coins={userData.coins}
             onSpendCoins={handleSpendCoins}
           />
-          {shouldShowAdBar && <AdBar />}
+          {/* {shouldShowAdBar && <AdBar />} */}
         </>
       );
     if (activeGame === "cash")
@@ -409,7 +409,7 @@ export default function App() {
             coins={userData.coins}
             onSpendCoins={handleSpendCoins}
           />
-          {shouldShowAdBar && <AdBar />}
+          {/* {shouldShowAdBar && <AdBar />} */}
         </>
       );
     if (activeGame === "mathSwipe")
@@ -426,7 +426,7 @@ export default function App() {
             coins={userData.coins}
             onSpendCoins={handleSpendCoins}
           />
-          {shouldShowAdBar && <AdBar />}
+          {/* {shouldShowAdBar && <AdBar />} */}
         </>
       );
 
@@ -447,7 +447,7 @@ export default function App() {
           selectGame={selectGame}
           onHome={goHome}
         />
-        {shouldShowAdBar && <AdBar />}
+        {/* {shouldShowAdBar && <AdBar />} */}
       </>
     );
 
